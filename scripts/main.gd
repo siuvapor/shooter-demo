@@ -172,16 +172,16 @@ func _on_damage_dealt(amount: int, zone: String, weapon_id: String) -> void:
 	if zone == "head":
 		stats["headshots"] += 1
 	if zombie_mode:
-		stats["score"] += _zombie_hit_points(weapon_id, zone)
+		stats["score"] += _zombie_hit_points(weapon_id, zone) * _zombie_score_multiplier()
 
 
 func _on_kill_confirmed(weapon_id: String) -> void:
 	stats["kills"] += 1
 	if zombie_mode:
 		if weapon_id == "knife":
-			stats["score"] += 10.0
+			stats["score"] += 10.0 * _zombie_score_multiplier()
 		elif weapon_id == "lockon":
-			stats["score"] -= 2.0
+			stats["score"] -= 2.0 * _zombie_score_multiplier()
 
 
 func _zombie_hit_points(weapon_id: String, zone: String) -> float:
@@ -207,6 +207,17 @@ func _zombie_interval() -> float:
 		"insane":
 			return 0.5
 	return 3.0
+
+
+func _zombie_score_multiplier() -> float:
+	match _zombie_difficulty():
+		"easy":
+			return 1.0
+		"hard":
+			return 2.0
+		"insane":
+			return 4.0
+	return 1.5
 
 
 func _zombie_difficulty() -> String:
