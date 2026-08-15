@@ -62,7 +62,9 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 
 ## Modes
 
-- Classic: 1v1 duel against an AI bot, first to 10 kills.
+- Classic: duel against AI bots. Easy bots aim worse, Normal uses standard
+  strength, Hard has two enemies and requires 20 kills, Insane has three
+  enemies moving 1.5x faster with the same 20-kill goal.
 - Zombie: endless survival. Knife-only zombies chase the player, one spawns
   every 5 seconds, and zombies down without leaving tombstones. The player has
   1000 HP, dies once and it is game over, and zombies can only attack with a

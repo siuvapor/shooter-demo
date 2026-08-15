@@ -38,6 +38,8 @@ var _spawn_yaw := 0.0
 var _torso_material: StandardMaterial3D
 var _gun_sfx: AudioStreamPlayer3D
 var _downed_time := 0.0
+var speed_multiplier := 1.0
+var aim_error := AIM_ERROR
 
 
 func _ready() -> void:
@@ -154,6 +156,7 @@ func _patrol() -> void:
 	var speed := WALK_SPEED
 	if _can_see_player():
 		speed = CROUCH_SPEED
+	speed *= speed_multiplier
 	var direction := to_target.normalized()
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
@@ -209,7 +212,7 @@ func _aim_direction() -> Vector3:
 	var target := player.camera.global_position
 	var to_target := target - eye.global_position
 	var distance := to_target.length()
-	var error := AIM_ERROR + maxf(0.0, distance - 8.0) * 0.0025
+	var error := aim_error + maxf(0.0, distance - 8.0) * 0.0025
 	if player.crouching:
 		error += 0.012
 	var forward := to_target.normalized()
