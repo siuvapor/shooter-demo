@@ -73,7 +73,8 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 - Three-Layer Tower: the default map with vertical/horizontal ropes, jump pads,
   wormholes, ramps, and three floors.
 - Field Cover: open field map with wooden crates that can be shot apart and
-  grass bushes that provide low cover.
+  tall grass that blocks vision. A large arch bridge crosses the center with
+  destructible door-like cover under the arch.
 
 Both maps can be selected from the main menu.
 
