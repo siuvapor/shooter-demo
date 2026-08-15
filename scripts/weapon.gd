@@ -193,6 +193,7 @@ var _ammo: Dictionary = {}
 var _sfx: AudioStreamPlayer
 var _viewmodel_root: Node3D
 var _magazine_mesh: MeshInstance3D
+var _bolt_mesh: MeshInstance3D
 var _mag_done := false
 var _viewmodel_nodes: Array[Node3D] = []
 var _built := false
@@ -577,12 +578,14 @@ func _update_viewmodel(delta: float) -> void:
 
 	if bolt_timer > 0.0 and current_weapon_id == "operator":
 		var p := 1.0 - bolt_timer / maxf(bolt_duration, 0.001)
-		var bolt := sin(p * PI)
-		position.y += bolt * 0.10
-		position.z += bolt * 0.16
-		rotation.x += bolt * 0.85
-		rotation.y += sin(p * PI * 2.0) * 0.42
-		rotation.z += sin(p * PI * 2.0) * 0.12
+		var stroke := sin(p * PI)
+		var handle_cycle := sin(p * TAU)
+		position.y += stroke * 0.055
+		position.z += stroke * 0.11
+		if _bolt_mesh != null:
+			_bolt_mesh.position.z = 0.02 + stroke * 0.18
+			_bolt_mesh.position.y = 0.035 + handle_cycle * 0.055
+			_bolt_mesh.rotation.x = handle_cycle * 0.42
 
 	if current_def["type"] == "special":
 		var locked := _lock_target != null
@@ -708,6 +711,7 @@ func _rebuild_viewmodel() -> void:
 		child.free()
 	_viewmodel_nodes.clear()
 	_magazine_mesh = null
+	_bolt_mesh = null
 	match current_weapon_id:
 		"vandal":
 			_build_rifle(Color(0.78, 0.24, 0.20), 0.42, 0.24)
@@ -740,6 +744,7 @@ func _build_operator() -> void:
 	_add_box(Vector3(0.05, 0.14, 0.06), Color(0.95, 0.76, 0.34), Vector3(0.0, -0.07, 0.16))
 	_magazine_mesh = _add_box(Vector3(0.04, 0.18, 0.08), Color(0.15, 0.15, 0.18), Vector3(0.0, -0.11, 0.12))
 	_add_box(Vector3(0.04, 0.04, 0.16), Color(0.95, 0.76, 0.34), Vector3(0.0, 0.045, -0.22))
+	_bolt_mesh = _add_box(Vector3(0.025, 0.025, 0.18), Color(0.34, 0.34, 0.38), Vector3(0.045, 0.035, 0.02))
 
 
 func _build_sheriff() -> void:
