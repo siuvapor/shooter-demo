@@ -33,6 +33,7 @@ var player_sfx: AudioStreamPlayer
 var mouse_sensitivity := DEFAULT_MOUSE_SENSITIVITY
 
 var health := MAX_HEALTH
+var max_health := MAX_HEALTH
 var dead := false
 var crouching := false
 var slow_walking := false
@@ -59,10 +60,13 @@ func _ready() -> void:
 	var settings := get_node_or_null("/root/Settings")
 	if settings != null:
 		mouse_sensitivity = settings.mouse_sensitivity
+		if settings.game_mode == "zombie":
+			max_health = 1000
+			health = max_health
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_spawn_position = global_position
 	_spawn_yaw = rotation.y
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 
 
 func _exit_tree() -> void:
@@ -190,7 +194,7 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 		return
 	_play_sound(HURT_SOUND, -4.0, randf_range(0.9, 1.1))
 	health = maxi(0, health - amount)
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	if health == 0:
 		dead = true
 		_downed_time = 0.0
@@ -204,7 +208,7 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	base_yaw = yaw
 	base_pitch = 0.0
 	velocity = Vector3.ZERO
-	health = MAX_HEALTH
+	health = max_health
 	dead = false
 	crouching = false
 	_downed_time = 0.0
@@ -219,7 +223,7 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	_land_anim = 0.0
 	_was_on_floor = true
 	weapon.reset_ammo()
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	respawned.emit()
 
 

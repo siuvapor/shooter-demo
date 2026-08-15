@@ -110,6 +110,13 @@ func _try_attack() -> void:
 	to_player.y = 0.0
 	if to_player.length() > ATTACK_RANGE or _attack_timer > 0.0 or player.dead:
 		return
+	var from := global_position + Vector3(0.0, 1.5, 0.0)
+	var to := player.camera.global_position
+	var query := PhysicsRayQueryParameters3D.create(from, to, 0b1111)
+	query.exclude = [get_rid()]
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if not (result.is_empty() or result.collider == player):
+		return
 	_attack_timer = ATTACK_COOLDOWN
 	player.take_damage(MELEE_DAMAGE, "body", player.global_position + Vector3(0.0, 1.0, 0.0), global_position.direction_to(player.global_position), self)
 	var world := get_tree().current_scene

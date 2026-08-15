@@ -53,7 +53,7 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	player.hit_marker.connect(crosshair.trigger_hitmarker)
 	player.died.connect(_on_player_died_ui)
 	player.respawned.connect(_on_player_respawned_ui)
-	_on_health_changed(player.health, player.MAX_HEALTH)
+	_on_health_changed(player.health, player.max_health)
 	_on_ammo_changed(player.weapon.magazine, player.weapon.reserve)
 	_on_weapon_selected(player.weapon.current_weapon_id)
 	update_score(0, 0)

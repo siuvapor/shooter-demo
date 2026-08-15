@@ -63,7 +63,9 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 
 - Classic: 1v1 duel against an AI bot, first to 10 kills.
 - Zombie: endless survival. Knife-only zombies chase the player, one spawns
-  every 5 seconds, and zombies down without leaving tombstones.
+  every 5 seconds, and zombies down without leaving tombstones. The player has
+  1000 HP, dies once and it is game over, and zombies can only attack with a
+  clear line of sight.
 
 ## Valorant-aligned values
 
