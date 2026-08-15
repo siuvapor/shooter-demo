@@ -1,15 +1,27 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
-[autoload]
+[animation]
 
-Settings="*res://scripts/settings.gd"
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
 config/name="Valorant Duel 3D"
 run/main_scene="res://scenes/menu.tscn"
+config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"
-config/features=PackedStringArray("4.3")
+
+[autoload]
+
+Settings="*res://scripts/settings.gd"
 
 [display]
 
@@ -19,6 +31,4 @@ window/stretch/mode="canvas_items"
 
 [rendering]
 
-renderer/rendering_method="forward_plus"
-renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
