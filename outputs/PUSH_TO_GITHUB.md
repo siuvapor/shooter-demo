@@ -25,6 +25,6 @@ git push -u origin main
 cd C:\Users\Lenovo\Documents\Codex\2026-08-15\godot4-3d-valorant
 git clone outputs\godot4-3d-valorant.bundle shooter-demo
 cd shooter-demo
-git remote add origin https://github.com/siuvapor/shooter-demo.git
+git remote set-url origin https://github.com/siuvapor/shooter-demo.git
 git push -u origin main
 ```
