@@ -14,7 +14,7 @@ const CROUCH_SPEED := 4.1
 const ADS_SPEED := 4.104
 const JUMP_VELOCITY := 5.86
 const GRAVITY := 22.0
-const MOUSE_SENSITIVITY := 0.0018
+const DEFAULT_MOUSE_SENSITIVITY := 0.0018
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.1
 const STAND_EYE := 1.62
@@ -29,6 +29,7 @@ var camera: Camera3D
 var weapon: Weapon
 var collision_shape: CollisionShape3D
 var player_sfx: AudioStreamPlayer
+var mouse_sensitivity := DEFAULT_MOUSE_SENSITIVITY
 
 var health := MAX_HEALTH
 var dead := false
@@ -49,6 +50,9 @@ func _ready() -> void:
 	set_collision_mask_value(2, true)
 	set_collision_mask_value(4, true)
 	weapon.setup(self, camera)
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null:
+		mouse_sensitivity = settings.mouse_sensitivity
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_spawn_position = global_position
 	_spawn_yaw = rotation.y
@@ -88,8 +92,8 @@ func _build_body() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		base_yaw -= event.relative.x * MOUSE_SENSITIVITY
-		base_pitch -= event.relative.y * MOUSE_SENSITIVITY
+		base_yaw -= event.relative.x * mouse_sensitivity
+		base_pitch -= event.relative.y * mouse_sensitivity
 		base_pitch = clampf(base_pitch, -1.55, 1.55)
 		rotation.y = base_yaw
 
