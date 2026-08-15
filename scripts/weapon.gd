@@ -135,6 +135,7 @@ const RELOAD_START_SOUND := preload("res://assets/audio/reload_start.wav")
 const RELOAD_END_SOUND := preload("res://assets/audio/reload_end.wav")
 const HIT_SOUND := preload("res://assets/audio/hitmarker.wav")
 const HEADSHOT_SOUND := preload("res://assets/audio/headshot.wav")
+const SLASH_SOUND := preload("res://assets/audio/slash.wav")
 
 var player: Player
 var camera: Camera3D
@@ -155,6 +156,11 @@ var recovery_timer := 0.0
 var ads_amount := 0.0
 var ads_target := 0.0
 var inspect_timer := 0.0
+var slash_timer := 0.0
+var slash_duration := 0.42
+var slash_mode := ""
+var sniper_scope_on := false
+var _rmb_was_down := false
 var _ammo: Dictionary = {}
 var _sfx: AudioStreamPlayer
 var _viewmodel_root: Node3D
@@ -194,13 +200,26 @@ func _process(delta: float) -> void:
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 	if inspect_timer > 0.0:
 		inspect_timer = maxf(0.0, inspect_timer - delta)
+	if slash_timer > 0.0:
+		slash_timer = maxf(0.0, slash_timer - delta)
 	if reloading:
 		reload_timer -= delta
 		if reload_timer <= 0.0:
 			_finish_reload()
 	if player.dead:
 		return
-	ads_target = 1.0 if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and current_def["type"] != "melee" else 0.0
+	var rmb_down := Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	if rmb_down and not _rmb_was_down:
+		if current_def["type"] == "melee":
+			if fire_cooldown <= 0.0:
+				_heavy_melee_attack()
+		elif current_def["type"] == "sniper":
+			sniper_scope_on = not sniper_scope_on
+	_rmb_was_down = rmb_down
+	if current_def["type"] == "sniper":
+		ads_target = 1.0 if sniper_scope_on else 0.0
+	else:
+		ads_target = 1.0 if rmb_down and current_def["type"] != "melee" else 0.0
 	if Input.is_physical_key_pressed(KEY_1):
 		select_weapon_id("vandal")
 	elif Input.is_physical_key_pressed(KEY_2):
@@ -224,6 +243,7 @@ func _process(delta: float) -> void:
 
 func fire() -> void:
 	inspect_timer = 0.0
+	slash_timer = 0.0
 	if current_def["type"] == "melee":
 		_melee_attack()
 		return
@@ -256,9 +276,14 @@ func fire() -> void:
 	fired.emit()
 
 
-func _melee_attack() -> void:
+func _melee_attack(heavy := false) -> void:
 	var def: Dictionary = current_def
+	inspect_timer = 0.0
+	slash_timer = 0.55 if heavy else 0.42
+	slash_duration = slash_timer
+	slash_mode = "stab" if heavy else ("slash_b" if randi() % 2 == 0 else "slash_a")
 	fire_cooldown = 1.0 / def["fire_rate"]
+	_play_sound(SLASH_SOUND, -4.0, randf_range(0.95, 1.05))
 	var from := camera.global_position
 	var forward := -camera.global_transform.basis.z
 	var reach: float = def.get("range", 2.4)
@@ -269,13 +294,17 @@ func _melee_attack() -> void:
 	var end: Vector3 = to
 	if result:
 		end = result.position
-		_resolve_hit(result)
+		_resolve_hit(result, 2.0 if heavy else 1.0)
 	var world := get_tree().current_scene
 	Fx.spawn_tracer(world, from + forward * 0.3, end, Color(0.95, 0.88, 0.72))
 	fired.emit()
 
 
-func _resolve_hit(result: Dictionary) -> void:
+func _heavy_melee_attack() -> void:
+	_melee_attack(true)
+
+
+func _resolve_hit(result: Dictionary, damage_multiplier := 1.0) -> void:
 	var collider: Node = result.collider
 	if collider == null or not collider.is_in_group("damageable"):
 		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal)
@@ -283,7 +312,8 @@ func _resolve_hit(result: Dictionary) -> void:
 	var zone := "body"
 	if collider.has_method("resolve_hit_zone"):
 		zone = collider.resolve_hit_zone(result.position)
-	var damage: int = current_def["damage_head"] if zone == "head" else current_def["damage_body"] if zone == "body" else current_def["damage_leg"]
+	var base_damage: int = current_def["damage_head"] if zone == "head" else current_def["damage_body"] if zone == "body" else current_def["damage_leg"]
+	var damage: int = int(base_damage * damage_multiplier)
 	if collider.has_method("take_damage"):
 		collider.take_damage(damage, zone, result.position, result.normal, player)
 	player.hit_marker.emit(zone)
@@ -375,6 +405,8 @@ func _update_viewmodel(delta: float) -> void:
 	if _viewmodel_nodes.is_empty():
 		return
 	var is_melee: bool = current_def["type"] == "melee"
+	var scoped := current_weapon_id == "operator" and ads_amount > 0.5
+	_viewmodel_root.visible = not scoped
 	var base_x := 0.14 if is_melee else 0.22
 	var base_y := -0.20 if is_melee else -0.22
 	var base_z := -0.42 if is_melee else -0.45
@@ -421,6 +453,27 @@ func _update_viewmodel(delta: float) -> void:
 			rotation.y += sin(p * TAU) * 0.7
 			rotation.z += sin(p * PI * 2.0) * 0.12
 
+	if slash_timer > 0.0 and is_melee:
+		var p: float = 1.0 - slash_timer / slash_duration
+		var back := sin(p * PI)
+		position.y += back * (0.10 if slash_mode == "stab" else 0.08)
+		position.z += back * (0.16 if slash_mode == "stab" else 0.10)
+		if slash_mode == "stab":
+			rotation.x += back * 0.9
+			rotation.z += back * -0.12
+		elif slash_mode == "slash_a":
+			rotation.y += sin(p * PI * 2.0) * 1.3
+			rotation.x += back * 0.55
+			rotation.z += back * 0.35
+		else:
+			rotation.y += sin(p * PI * 2.0) * -1.3
+			rotation.x += back * 0.55
+			rotation.z += back * -0.35
+		if p > 0.78:
+			var retract: float = (p - 0.78) / 0.22
+			position.y += retract * -0.05
+			position.z += retract * 0.06
+
 	if player.get_current_move_speed() > 0.5 and player.is_on_floor() and not player.dead:
 		var t := Time.get_ticks_msec() / 1000.0
 		position.y += sin(t * 9.0) * 0.004
@@ -442,7 +495,7 @@ func select_weapon_id(id: String, force := false) -> void:
 
 
 func start_inspect() -> void:
-	if reloading or inspect_timer > 0.0 or player == null or player.dead:
+	if reloading or inspect_timer > 0.0 or slash_timer > 0.0 or player == null or player.dead:
 		return
 	inspect_timer = INSPECT_DURATION
 	inspect_started.emit()
@@ -517,6 +570,10 @@ func _reset_weapon_state() -> void:
 	ads_amount = 0.0
 	ads_target = 0.0
 	inspect_timer = 0.0
+	slash_timer = 0.0
+	slash_mode = ""
+	sniper_scope_on = false
+	_rmb_was_down = false
 	_mag_done = false
 
 

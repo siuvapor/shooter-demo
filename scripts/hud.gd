@@ -11,6 +11,7 @@ var message_label: Label
 var crosshair: Crosshair
 var reload_bar: ProgressBar
 var death_overlay: ColorRect
+var scope_overlay: ScopeOverlay
 var loadout_panel: PanelContainer
 var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
@@ -22,9 +23,13 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if player == null or player.weapon == null or reload_bar == null:
+	if player == null or player.weapon == null:
 		return
-	reload_bar.value = player.weapon.get_reload_progress()
+	if reload_bar != null:
+		reload_bar.value = player.weapon.get_reload_progress()
+	var scoped := player.weapon.current_weapon_id == "operator" and player.weapon.ads_amount > 0.5
+	scope_overlay.visible = scoped
+	crosshair.visible = not scoped
 
 
 func setup(target_player: Player, target_bot: DuelBot) -> void:
@@ -60,6 +65,11 @@ func _build_ui() -> void:
 	death_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	death_overlay.visible = false
 	root.add_child(death_overlay)
+
+	scope_overlay = ScopeOverlay.new()
+	scope_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scope_overlay.visible = false
+	root.add_child(scope_overlay)
 
 	var top_left := VBoxContainer.new()
 	top_left.position = Vector2(24.0, 20.0)
