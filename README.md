@@ -9,6 +9,8 @@ in the style of the Valorant "Duel" maps.
 ![Weapons](outputs/gameplay_weapons.png)
 ![Scope](outputs/scope.png)
 ![Knife](outputs/knife_slash.png)
+![Map](outputs/map_three_floors.png)
+![Lockon](outputs/lockon.png)
 
 ## How to run
 
@@ -30,8 +32,10 @@ settings. Press `Esc` in-game to exit.
 - `Ctrl`: crouch
 - `Space`: jump
 - `1-5`: switch weapon
+- `6`: Lock Rifle
 - `B`: open in-game weapon loadout
 - `F`: inspect weapon
+- `E`: use rope teleporter
 - Knife `LMB`: slash with swing and retract animation
 - Knife `RMB`: heavy stab
 - Operator `RMB`: toggle sniper scope
@@ -44,11 +48,13 @@ settings. Press `Esc` in-game to exit.
 - `3` Operator
 - `4` Sheriff
 - `5` Butterfly Knife
+- `6` Lock Rifle
 
 Each weapon has its own ammo, fire rate, reload time, ADS zoom, and damage
 profile. Press `F` to inspect the equipped weapon. The Butterfly Knife has
 slash, heavy stab, and spin-inspect animations. The Operator uses a full-screen
-scope overlay while scoped.
+scope overlay while scoped. The Lock Rifle auto-locks onto an enemy head,
+disables mouse look while equipped, and keeps the crosshair on the target.
 
 ## Valorant-aligned values
 
@@ -73,6 +79,9 @@ scope overlay while scoped.
 - Reload animation with magazine swap and a HUD reload progress bar
 - Downed death animation followed by a persistent tombstone for each player
 - In-game weapon loadout panel with clickable weapon buttons
+- Three-layer tower map with jumpable cover and rope teleporters
+- Stronger jump for clearing low crates and stepping up between floors
+- Lock Rifle with auto head-lock and locked-on crosshair brackets
 
 The map and AI are generated at runtime from GDScript, so the repository only
 needs the scene and script files.

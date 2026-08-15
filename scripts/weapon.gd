@@ -14,7 +14,7 @@ const RANGE := 300.0
 const RECOIL_RECOVERY_TIME := 0.375
 const INSPECT_DURATION := 1.2
 
-const WEAPON_ORDER := ["vandal", "phantom", "operator", "sheriff", "knife"]
+const WEAPON_ORDER := ["vandal", "phantom", "operator", "sheriff", "knife", "lockon"]
 
 const WEAPON_DEFS := {
 	"vandal": {
@@ -127,6 +127,29 @@ const WEAPON_DEFS := {
 		"spread_ads_max": 0.0,
 		"spread_ads_max_crouch": 0.0,
 		"range": 2.4
+	},
+	"lockon": {
+		"name": "Lock Rifle",
+		"type": "special",
+		"color": Color(0.95, 0.35, 1.0),
+		"damage_head": 200,
+		"damage_body": 60,
+		"damage_leg": 50,
+		"fire_rate": 6.0,
+		"ads_fire_rate": 6.0,
+		"magazine_size": 12,
+		"reserve_size": 48,
+		"reload_time": 2.2,
+		"ads_zoom": 1.0,
+		"spread": 0.0,
+		"spread_crouch": 0.0,
+		"spread_max": 0.0,
+		"spread_max_crouch": 0.0,
+		"spread_ads": 0.0,
+		"spread_ads_crouch": 0.0,
+		"spread_ads_max": 0.0,
+		"spread_ads_max_crouch": 0.0,
+		"range": 220.0
 	}
 }
 
@@ -161,6 +184,7 @@ var slash_duration := 0.42
 var slash_mode := ""
 var sniper_scope_on := false
 var _rmb_was_down := false
+var _lock_target: Node3D
 var _ammo: Dictionary = {}
 var _sfx: AudioStreamPlayer
 var _viewmodel_root: Node3D
@@ -218,6 +242,8 @@ func _process(delta: float) -> void:
 	_rmb_was_down = rmb_down
 	if current_def["type"] == "sniper":
 		ads_target = 1.0 if sniper_scope_on else 0.0
+	elif current_def["type"] == "special" or current_def["type"] == "melee":
+		ads_target = 0.0
 	else:
 		ads_target = 1.0 if rmb_down and current_def["type"] != "melee" else 0.0
 	if Input.is_physical_key_pressed(KEY_1):
@@ -230,8 +256,11 @@ func _process(delta: float) -> void:
 		select_weapon_id("sheriff")
 	elif Input.is_physical_key_pressed(KEY_5):
 		select_weapon_id("knife")
+	elif Input.is_physical_key_pressed(KEY_6):
+		select_weapon_id("lockon")
 	if Input.is_physical_key_pressed(KEY_F):
 		start_inspect()
+	_update_lockon()
 	if Input.is_physical_key_pressed(KEY_R):
 		start_reload()
 	if magazine == 0 and not reloading and current_def["type"] != "melee":
@@ -257,6 +286,9 @@ func fire() -> void:
 
 	var from := camera.global_position
 	var direction := _shoot_direction(calculate_spread())
+	if current_def["type"] == "special" and _lock_target != null:
+		var head: Vector3 = _lock_target.global_position + Vector3(0.0, 1.55, 0.0)
+		direction = (head - from).normalized()
 	var to := from + direction * RANGE
 	var query := PhysicsRayQueryParameters3D.create(from, to, 0b1111)
 	query.exclude = [player.get_rid()]
@@ -334,6 +366,8 @@ func _shoot_direction(spread_degrees: float) -> Vector3:
 
 
 func calculate_spread() -> float:
+	if current_def["type"] == "special":
+		return 0.0
 	var def: Dictionary = current_def
 	var is_ads := ads_amount > 0.5
 	var base := 0.0
@@ -394,6 +428,41 @@ func _update_recoil(delta: float) -> void:
 
 func _update_spray(delta: float) -> void:
 	spread_bonus = maxf(0.0, spread_bonus - delta * 0.32)
+
+
+func _update_lockon() -> void:
+	if current_def["type"] != "special" or player == null or player.dead:
+		_lock_target = null
+		return
+	var best: Node3D = null
+	var best_distance := INF
+	for target in get_tree().get_nodes_in_group("damageable"):
+		var target_node: Node3D = target as Node3D
+		if target_node == null or target_node == player:
+			continue
+		if not target_node.has_method("take_damage"):
+			continue
+		if target_node.get("dead") == true:
+			continue
+		var head: Vector3 = target_node.global_position + Vector3(0.0, 1.55, 0.0)
+		var distance := camera.global_position.distance_to(head)
+		if distance > current_def.get("range", 220.0):
+			continue
+		var query := PhysicsRayQueryParameters3D.create(camera.global_position, head, 0b1111)
+		query.exclude = [player.get_rid()]
+		var result := camera.get_world_3d().direct_space_state.intersect_ray(query)
+		if result.is_empty() or result.collider == target_node:
+			if distance < best_distance:
+				best_distance = distance
+				best = target_node
+	_lock_target = best
+	if best != null:
+		var head: Vector3 = best.global_position + Vector3(0.0, 1.55, 0.0)
+		player.set_locked_aim(head - camera.global_position)
+
+
+func is_locked() -> bool:
+	return _lock_target != null and current_def["type"] == "special"
 
 
 func _update_ads(delta: float) -> void:
@@ -474,9 +543,15 @@ func _update_viewmodel(delta: float) -> void:
 			position.y += retract * -0.05
 			position.z += retract * 0.06
 
+	if current_def["type"] == "special":
+		var locked := _lock_target != null
+		position.y += -0.02 + (0.02 if locked else 0.0)
+		rotation.z += -0.06 + (0.08 if locked else 0.0)
+
 	if player.get_current_move_speed() > 0.5 and player.is_on_floor() and not player.dead:
 		var t := Time.get_ticks_msec() / 1000.0
 		position.y += sin(t * 9.0) * 0.004
+	position.y += player.get_vertical_anim_offset() * 0.35
 
 
 func select_weapon_id(id: String, force := false) -> void:
@@ -574,6 +649,7 @@ func _reset_weapon_state() -> void:
 	slash_mode = ""
 	sniper_scope_on = false
 	_rmb_was_down = false
+	_lock_target = null
 	_mag_done = false
 
 
@@ -595,6 +671,8 @@ func _rebuild_viewmodel() -> void:
 			_build_sheriff()
 		"knife":
 			_build_knife()
+		"lockon":
+			_build_lockon()
 
 
 func _build_rifle(accent: Color, body_length: float, magazine_length: float) -> void:
@@ -630,6 +708,16 @@ func _build_knife() -> void:
 	_add_box(Vector3(0.035, 0.045, 0.12), Color(0.16, 0.16, 0.18), Vector3(0.0, 0.065, -0.02))
 	_add_box(Vector3(0.040, 0.030, 0.04), Color(0.88, 0.62, 0.24), Vector3(0.0, -0.03, -0.10))
 	_add_box(Vector3(0.040, 0.030, 0.04), Color(0.88, 0.62, 0.24), Vector3(0.0, 0.025, 0.04))
+
+
+func _build_lockon() -> void:
+	_add_box(Vector3(0.07, 0.11, 0.46), Color(0.12, 0.12, 0.16), Vector3(0.0, 0.0, -0.03))
+	_add_box(Vector3(0.05, 0.05, 0.24), Color(0.08, 0.08, 0.12), Vector3(0.0, 0.03, -0.34))
+	_add_box(Vector3(0.05, 0.16, 0.08), Color(0.16, 0.16, 0.20), Vector3(0.0, -0.10, 0.12))
+	_add_box(Vector3(0.05, 0.12, 0.08), Color(0.13, 0.13, 0.17), Vector3(0.0, -0.08, 0.20))
+	_add_box(Vector3(0.05, 0.06, 0.05), Color(0.95, 0.35, 1.0), Vector3(0.0, 0.10, 0.02))
+	_add_box(Vector3(0.035, 0.035, 0.08), Color(0.95, 0.35, 1.0), Vector3(0.0, 0.04, -0.36))
+	_add_box(Vector3(0.04, 0.04, 0.06), Color(0.35, 0.9, 1.0), Vector3(0.0, 0.02, -0.10))
 
 
 func _play_sound(stream: AudioStream, volume: float, pitch: float) -> void:

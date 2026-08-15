@@ -12,6 +12,7 @@ var crosshair: Crosshair
 var reload_bar: ProgressBar
 var death_overlay: ColorRect
 var scope_overlay: ScopeOverlay
+var interact_prompt: Label
 var loadout_panel: PanelContainer
 var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
@@ -30,6 +31,11 @@ func _process(_delta: float) -> void:
 	var scoped := player.weapon.current_weapon_id == "operator" and player.weapon.ads_amount > 0.5
 	scope_overlay.visible = scoped
 	crosshair.visible = not scoped
+	interact_prompt.visible = false
+	for rope in get_tree().get_nodes_in_group("rope_teleporter"):
+		if rope.active:
+			interact_prompt.visible = true
+			break
 
 
 func setup(target_player: Player, target_bot: DuelBot) -> void:
@@ -97,6 +103,15 @@ func _build_ui() -> void:
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	root.add_child(message_label)
+
+	interact_prompt = _make_label(26, Color(1.0, 0.9, 0.7))
+	interact_prompt.text = "E  绳索传送"
+	interact_prompt.visible = false
+	interact_prompt.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	interact_prompt.position = Vector2(-120.0, -230.0)
+	interact_prompt.custom_minimum_size = Vector2(240.0, 40.0)
+	interact_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(interact_prompt)
 
 	var bottom_center := CenterContainer.new()
 	bottom_center.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
