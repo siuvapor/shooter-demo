@@ -27,6 +27,11 @@ func _ready() -> void:
 	hud.setup(player, bot)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		get_tree().quit()
+
+
 func _physics_process(delta: float) -> void:
 	if match_over or respawn_queued == "":
 		return

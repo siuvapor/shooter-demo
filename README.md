@@ -5,12 +5,16 @@ to current Valorant Vandal parameters. The map is a compact two-lane duel arena
 in the style of the Valorant "Duel" maps.
 
 ![Screenshot](outputs/screenshot.png)
+![Menu](outputs/menu.png)
 
 ## How to run
 
 1. Open the project in Godot 4.x.
 2. Run the main scene `res://scenes/main.tscn`.
 3. The game starts immediately against one AI duel bot. First to 10 kills wins.
+
+The project opens on a main menu with fullscreen, mouse sensitivity, and quit
+settings. Press `Esc` in-game to exit.
 
 ## Controls
 
@@ -22,6 +26,7 @@ in the style of the Valorant "Duel" maps.
 - `Shift`: slow walk
 - `Ctrl`: crouch
 - `Space`: jump
+- `Esc`: exit game
 
 ## Valorant-aligned values
 
