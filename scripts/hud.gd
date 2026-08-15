@@ -127,6 +127,27 @@ func _build_ui() -> void:
 	stats_body = _make_label(22, Color(0.9, 0.94, 1.0))
 	stats_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stats_vbox.add_child(stats_body)
+	var stats_buttons := HBoxContainer.new()
+	stats_buttons.add_theme_constant_override("separation", 8)
+	stats_vbox.add_child(stats_buttons)
+	var back_button := Button.new()
+	back_button.text = "回到主界面"
+	back_button.custom_minimum_size = Vector2(0.0, 44.0)
+	back_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	back_button.pressed.connect(_on_back_to_menu_pressed)
+	stats_buttons.add_child(back_button)
+	var again_button := Button.new()
+	again_button.text = "再来一局"
+	again_button.custom_minimum_size = Vector2(0.0, 44.0)
+	again_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	again_button.pressed.connect(_on_play_again_pressed)
+	stats_buttons.add_child(again_button)
+	var quit_button := Button.new()
+	quit_button.text = "退出至桌面"
+	quit_button.custom_minimum_size = Vector2(0.0, 44.0)
+	quit_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	quit_button.pressed.connect(_on_quit_to_desktop_pressed)
+	stats_buttons.add_child(quit_button)
 
 	interact_prompt = _make_label(26, Color(1.0, 0.9, 0.7))
 	interact_prompt.text = "E  绳索传送"
@@ -228,6 +249,18 @@ func show_end_stats(stats: Dictionary, is_zombie: bool) -> void:
 		accuracy,
 		int(stats["deaths"])
 	]
+
+
+func _on_back_to_menu_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _on_play_again_pressed() -> void:
+	get_tree().reload_current_scene()
+
+
+func _on_quit_to_desktop_pressed() -> void:
+	get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:

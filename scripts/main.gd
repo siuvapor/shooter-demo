@@ -228,6 +228,7 @@ func _zombie_difficulty() -> String:
 func _show_end_stats() -> void:
 	if not zombie_mode:
 		stats["score"] = float(player_score)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	hud.show_end_stats(stats, zombie_mode)
 
 
