@@ -41,6 +41,7 @@ var base_yaw := 0.0
 var _spawn_position := Vector3.ZERO
 var _spawn_yaw := 0.0
 var _footstep_timer := 0.0
+var _downed_time := 0.0
 
 
 func _ready() -> void:
@@ -100,8 +101,11 @@ func _input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	if camera != null and weapon != null:
-		camera.rotation.x = base_pitch + weapon.recoil_pitch
-		camera.rotation.y = weapon.recoil_yaw
+		if dead:
+			_update_downed(_delta)
+		else:
+			camera.rotation.x = base_pitch + weapon.recoil_pitch
+			camera.rotation.y = weapon.recoil_yaw
 
 
 func _physics_process(delta: float) -> void:
@@ -174,6 +178,8 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
 		dead = true
+		_downed_time = 0.0
+		weapon.visible = false
 		died.emit()
 
 
@@ -186,14 +192,27 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	health = MAX_HEALTH
 	dead = false
 	crouching = false
+	_downed_time = 0.0
 	var capsule := collision_shape.shape as CapsuleShape3D
 	capsule.height = STAND_HEIGHT
 	collision_shape.position.y = STAND_HEIGHT * 0.5
 	camera.position.y = STAND_EYE
+	camera.rotation.z = 0.0
+	weapon.visible = true
 	_footstep_timer = 0.0
 	weapon.reset_ammo()
 	health_changed.emit(health, MAX_HEALTH)
 	respawned.emit()
+
+
+func _update_downed(delta: float) -> void:
+	_downed_time += delta
+	var t := clampf(_downed_time / 0.8, 0.0, 1.0)
+	var eased := 1.0 - pow(1.0 - t, 3.0)
+	camera.position.y = lerpf(STAND_EYE, 0.25, eased)
+	camera.rotation.x = base_pitch - 1.35 * eased
+	camera.rotation.y = weapon.recoil_yaw if weapon != null else 0.0
+	camera.rotation.z = 0.08 * eased
 
 
 func _update_footsteps(delta: float) -> void:

@@ -6,6 +6,7 @@ in the style of the Valorant "Duel" maps.
 
 ![Screenshot](outputs/screenshot.png)
 ![Menu](outputs/menu.png)
+![Weapons](outputs/gameplay_weapons.png)
 
 ## How to run
 
@@ -26,7 +27,21 @@ settings. Press `Esc` in-game to exit.
 - `Shift`: slow walk
 - `Ctrl`: crouch
 - `Space`: jump
+- `1-5`: switch weapon
+- `B`: open in-game weapon loadout
+- `F`: inspect weapon
 - `Esc`: exit game
+
+## Weapons
+
+- `1` Vandal
+- `2` Phantom
+- `3` Operator
+- `4` Sheriff
+- `5` Butterfly Knife
+
+Each weapon has its own ammo, fire rate, reload time, ADS zoom, and damage
+profile. Press `F` to inspect the equipped weapon.
 
 ## Valorant-aligned values
 
@@ -49,6 +64,8 @@ settings. Press `Esc` in-game to exit.
 - Bot patrols both lanes and shoots with burst fire when it has line of sight
 - Procedural sounds for gunfire, reload, hitmarkers, player damage, and footsteps
 - Reload animation with magazine swap and a HUD reload progress bar
+- Downed death animation followed by a persistent tombstone for each player
+- In-game weapon loadout panel with clickable weapon buttons
 
 The map and AI are generated at runtime from GDScript, so the repository only
 needs the scene and script files.
