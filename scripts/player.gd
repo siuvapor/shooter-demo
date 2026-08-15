@@ -10,7 +10,7 @@ signal damaged(amount: int, hit_direction: Vector3)
 signal shield_changed(active: bool)
 
 const MAX_HEALTH := 150
-const SPAWN_SHIELD_TIME := 1.0
+const SPAWN_SHIELD_TIME := 2.0
 const WALK_SPEED := 5.4
 const SLOW_WALK_SPEED := 4.5
 const CROUCH_SPEED := 4.1
@@ -200,6 +200,9 @@ func resolve_hit_zone(hit_point: Vector3) -> String:
 
 func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vector3, _source: Node3D) -> void:
 	if dead or shield_active:
+		return
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null and settings.player_invincible:
 		return
 	_play_sound(HURT_SOUND, -4.0, randf_range(0.9, 1.1))
 	var feedback_direction := hit_normal.normalized()

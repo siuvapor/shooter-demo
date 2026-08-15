@@ -5,6 +5,18 @@ const MAP_SIZE_X := 80.0
 const WIN_SCORE := 10
 const PLAYER_RESPAWN_DELAY := 2.5
 const BOT_RESPAWN_DELAY := 0.0
+const BOT_SPAWN_POINTS := [
+	Vector3(-34.0, 0.0, 14.0),
+	Vector3(-30.0, 0.0, -16.0),
+	Vector3(-16.0, 0.0, -20.0),
+	Vector3(2.0, 0.0, -22.0),
+	Vector3(20.0, 0.0, -20.0),
+	Vector3(34.0, 0.0, -12.0),
+	Vector3(34.0, 0.0, 14.0),
+	Vector3(18.0, 0.0, 20.0),
+	Vector3(0.0, 0.0, 22.0),
+	Vector3(-18.0, 0.0, 20.0),
+]
 
 var map_builder: Node3D
 var player: Player
@@ -107,12 +119,16 @@ func _spawn_player() -> void:
 func _spawn_bots(count: int) -> void:
 	_bots.clear()
 	var difficulty := _difficulty()
+	var spawn_pool := BOT_SPAWN_POINTS.duplicate()
+	spawn_pool.shuffle()
 	for i in range(count):
+		var spawn: Dictionary = _bot_spawn_data(spawn_pool, i)
 		var new_bot := DuelBot.new()
 		new_bot.name = "DuelBot%d" % (i + 1)
 		add_child(new_bot)
-		new_bot.global_position = Vector3(MAP_SIZE_X * 0.5 - 4.0, 0.0, -6.0 + i * 6.0)
-		new_bot.rotation.y = PI * 0.5
+		new_bot.global_position = spawn["pos"]
+		new_bot.rotation.y = spawn["yaw"]
+		new_bot.set_spawn_point(spawn["pos"], spawn["yaw"])
 		new_bot.set_player(player)
 		new_bot.set_waypoints([
 			Vector3(-32.0, 0.0, 9.0),
@@ -292,7 +308,20 @@ func _finish_respawn() -> void:
 		player.respawn_at(Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0), -PI * 0.5)
 	elif who == "bot":
 		if is_instance_valid(_respawn_bot):
+			var spawn_pool := BOT_SPAWN_POINTS.duplicate()
+			spawn_pool.shuffle()
+			var spawn: Dictionary = _bot_spawn_data(spawn_pool, 0)
+			_respawn_bot.set_spawn_point(spawn["pos"], spawn["yaw"])
 			_respawn_bot.respawn()
+
+
+func _bot_spawn_data(pool: Array, slot: int) -> Dictionary:
+	var pos: Vector3 = pool[slot % pool.size()]
+	var to_player := player.global_position - pos
+	return {
+		"pos": pos,
+		"yaw": atan2(-to_player.x, -to_player.z)
+	}
 
 
 func _bot_count() -> int:

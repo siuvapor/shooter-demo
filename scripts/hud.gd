@@ -280,20 +280,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
-	if health_value == null:
-		return
-	health_value.text = "HP %d / %d" % [current, maximum]
-	health_value.add_theme_color_override("font_color", Color(0.95, 0.25, 0.2) if current <= 40 else Color(1.0, 1.0, 1.0))
+	_update_health_label()
 
 
 func _on_shield_changed(active: bool) -> void:
+	_update_health_label()
+
+
+func _update_health_label() -> void:
 	if health_value == null or player == null:
 		return
-	if active:
-		health_value.text = "HP %d / %d  [SHIELD]" % [player.health, player.max_health]
-		health_value.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
-	else:
-		_on_health_changed(player.health, player.max_health)
+	var suffix := ""
+	var label_color := Color(1.0, 1.0, 1.0)
+	if player.shield_active:
+		suffix += "  [SHIELD]"
+		label_color = Color(0.55, 0.85, 1.0)
+	elif player.health <= 40:
+		label_color = Color(0.95, 0.25, 0.2)
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null and settings.player_invincible:
+		suffix += "  [INVINCIBLE]"
+		label_color = Color(1.0, 0.85, 0.35)
+	health_value.text = "HP %d / %d%s" % [player.health, player.max_health, suffix]
+	health_value.add_theme_color_override("font_color", label_color)
 
 
 func _on_ammo_changed(magazine: int, reserve: int) -> void:

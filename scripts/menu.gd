@@ -9,6 +9,7 @@ var _map_buttons: Dictionary = {}
 var _difficulty_buttons: Dictionary = {}
 var _infinite_ammo_check: CheckButton
 var _infinite_magazine_check: CheckButton
+var _invincible_check: CheckButton
 var _start_button: Button
 var _zombie_button: Button
 
@@ -163,6 +164,17 @@ func _build_ui() -> void:
 	infinite_mag_row.add_child(_infinite_magazine_check)
 	vbox.add_child(infinite_mag_row)
 
+	var invincible_row := HBoxContainer.new()
+	var invincible_label := Label.new()
+	invincible_label.text = "无敌"
+	invincible_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_invincible_check = CheckButton.new()
+	_invincible_check.tooltip_text = "开启后玩家不会受到任何伤害。"
+	_invincible_check.toggled.connect(_on_invincible_toggled)
+	invincible_row.add_child(invincible_label)
+	invincible_row.add_child(_invincible_check)
+	vbox.add_child(invincible_row)
+
 	var difficulty_title := Label.new()
 	difficulty_title.text = "难度"
 	difficulty_title.add_theme_font_size_override("font_size", 18)
@@ -213,6 +225,7 @@ func _sync_controls() -> void:
 	var selected_map := "tower"
 	var infinite_ammo := false
 	var infinite_magazine := false
+	var invincible := false
 	var difficulty := "normal"
 	if settings != null:
 		fullscreen = settings.fullscreen
@@ -220,10 +233,12 @@ func _sync_controls() -> void:
 		selected_map = settings.selected_map
 		infinite_ammo = settings.infinite_ammo
 		infinite_magazine = settings.infinite_magazine
+		invincible = settings.player_invincible
 		difficulty = settings.zombie_difficulty
 	_fullscreen_check.button_pressed = fullscreen
 	_infinite_ammo_check.button_pressed = infinite_ammo
 	_infinite_magazine_check.button_pressed = infinite_magazine
+	_invincible_check.button_pressed = invincible
 	var multiplier := sensitivity / 0.0018
 	_sensitivity_slider.set_value_no_signal(multiplier)
 	_sensitivity_value.text = "%.2fx" % multiplier
@@ -287,6 +302,13 @@ func _on_infinite_magazine_toggled(enabled: bool) -> void:
 	var settings := _settings_node()
 	if settings != null:
 		settings.infinite_magazine = enabled
+		settings.save_settings()
+
+
+func _on_invincible_toggled(enabled: bool) -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.player_invincible = enabled
 		settings.save_settings()
 
 

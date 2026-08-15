@@ -131,6 +131,11 @@ func set_waypoints(points: Array[Vector3]) -> void:
 		_move_target = _waypoints[0]
 
 
+func set_spawn_point(pos: Vector3, yaw: float) -> void:
+	_spawn_position = pos
+	_spawn_yaw = yaw
+
+
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
