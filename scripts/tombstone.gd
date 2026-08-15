@@ -36,16 +36,6 @@ func setup(label: String, accent: Color) -> void:
 	base.position = Vector3(0.0, 0.06, 0.0)
 	add_child(base)
 
-	var label_node := Label3D.new()
-	label_node.text = "R.I.P.\n" + label
-	label_node.position = Vector3(0.0, 0.82, 0.09)
-	label_node.font_size = 56
-	label_node.pixel_size = 0.008
-	label_node.outline_size = 12
-	label_node.modulate = Color(0.92, 0.92, 0.88)
-	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label_node)
-
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(0.6, 0.95, 0.14)
