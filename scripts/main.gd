@@ -17,9 +17,19 @@ var respawn_queued := ""
 var respawn_timer := 0.0
 var zombie_mode := false
 var zombie_spawn_timer := 0.0
+var zombie_spawn_interval := 5.0
 var _tombstones: Array[Tombstone] = []
 var _pending_tombstones: Array[Dictionary] = []
 var _zombies: Array[ZombieEnemy] = []
+var stats := {
+	"score": 0.0,
+	"damage": 0,
+	"headshots": 0,
+	"hits": 0,
+	"shots": 0,
+	"kills": 0,
+	"deaths": 0
+}
 
 
 func _ready() -> void:
@@ -36,13 +46,20 @@ func _ready() -> void:
 		_spawn_wormholes()
 	_spawn_player()
 	if zombie_mode:
+		zombie_spawn_interval = _zombie_interval()
 		zombie_spawn_timer = 0.5
+		if _zombie_difficulty() == "insane":
+			for i in range(10):
+				_spawn_zombie()
 	else:
 		_spawn_bot()
 	hud = HUD.new()
 	add_child(hud)
 	hud.setup(player, bot)
 	hud.set_zombie_mode(zombie_mode)
+	player.weapon.fired.connect(_on_shot_fired)
+	player.weapon.damage_dealt.connect(_on_damage_dealt)
+	player.weapon.kill_confirmed.connect(_on_kill_confirmed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -60,9 +77,9 @@ func _physics_process(delta: float) -> void:
 	if match_over or respawn_queued == "":
 		if zombie_mode:
 			zombie_spawn_timer -= delta
-			if zombie_spawn_timer <= 0.0 and _zombies.size() < 10:
+			if zombie_spawn_timer <= 0.0 and _zombies.size() < 20:
 				_spawn_zombie()
-				zombie_spawn_timer = 5.0
+				zombie_spawn_timer = zombie_spawn_interval
 		return
 	respawn_timer -= delta
 	if respawn_timer <= 0.0:
@@ -70,9 +87,9 @@ func _physics_process(delta: float) -> void:
 
 	if zombie_mode:
 		zombie_spawn_timer -= delta
-		if zombie_spawn_timer <= 0.0 and _zombies.size() < 10:
+		if zombie_spawn_timer <= 0.0 and _zombies.size() < 20:
 			_spawn_zombie()
-			zombie_spawn_timer = 5.0
+			zombie_spawn_timer = zombie_spawn_interval
 
 
 func _spawn_player() -> void:
@@ -107,9 +124,11 @@ func _spawn_bot() -> void:
 func _on_player_died() -> void:
 	if match_over:
 		return
+	stats["deaths"] += 1
 	if zombie_mode:
 		match_over = true
 		hud.show_message("DEFEAT", true)
+		_show_end_stats()
 		return
 	bot_score += 1
 	hud.update_score(player_score, bot_score)
@@ -117,6 +136,7 @@ func _on_player_died() -> void:
 	if bot_score >= WIN_SCORE:
 		match_over = true
 		hud.show_message("DEFEAT", true)
+		_show_end_stats()
 	else:
 		respawn_queued = "player"
 		respawn_timer = PLAYER_RESPAWN_DELAY
@@ -131,15 +151,73 @@ func _on_bot_died() -> void:
 	if player_score >= WIN_SCORE:
 		match_over = true
 		hud.show_message("VICTORY", true)
+		_show_end_stats()
 	else:
 		respawn_queued = "bot"
 		respawn_timer = BOT_RESPAWN_DELAY
 
 
 func _on_zombie_died(zombie: ZombieEnemy) -> void:
-	player_score += 1
-	hud.update_score(player_score, bot_score)
 	_zombies.erase(zombie)
+	hud.update_score(player_score, bot_score)
+
+
+func _on_shot_fired() -> void:
+	stats["shots"] += 1
+
+
+func _on_damage_dealt(amount: int, zone: String, weapon_id: String) -> void:
+	stats["damage"] += amount
+	stats["hits"] += 1
+	if zone == "head":
+		stats["headshots"] += 1
+	if zombie_mode:
+		stats["score"] += _zombie_hit_points(weapon_id, zone)
+
+
+func _on_kill_confirmed(weapon_id: String) -> void:
+	stats["kills"] += 1
+	if zombie_mode:
+		if weapon_id == "knife":
+			stats["score"] += 10.0
+		elif weapon_id == "lockon":
+			stats["score"] -= 2.0
+
+
+func _zombie_hit_points(weapon_id: String, zone: String) -> float:
+	var head := zone == "head"
+	match weapon_id:
+		"vandal":
+			return 5.0 if head else 1.0
+		"phantom":
+			return 4.0 if head else 0.5
+		"operator":
+			return 8.0 if head else 5.0
+		"sheriff":
+			return 6.0 if head else 2.0
+	return 0.0
+
+
+func _zombie_interval() -> float:
+	match _zombie_difficulty():
+		"easy":
+			return 5.0
+		"hard":
+			return 1.0
+		"insane":
+			return 0.5
+	return 3.0
+
+
+func _zombie_difficulty() -> String:
+	var settings := get_node_or_null("/root/Settings")
+	return settings.zombie_difficulty if settings != null else "normal"
+
+
+func _show_end_stats() -> void:
+	if not zombie_mode:
+		stats["score"] = float(player_score)
+	hud.show_end_stats(stats, zombie_mode)
 
 
 func _spawn_zombie() -> void:

@@ -66,7 +66,26 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 - Zombie: endless survival. Knife-only zombies chase the player, one spawns
   every 5 seconds, and zombies down without leaving tombstones. The player has
   1000 HP, dies once and it is game over, and zombies can only attack with a
-  clear line of sight.
+  clear line of sight. Zombie difficulty options change spawn rate, and each
+  zombie doubles in speed every 20 seconds alive.
+
+## Zombie scoring
+
+- Vandal: head `+5`, body `+1`
+- Phantom: head `+4`, body `+0.5`
+- Operator: head `+8`, body `+5`
+- Sheriff: head `+6`, body `+2`
+- Knife kill: `+10`
+- Lock Rifle kill: `-2`
+- Zombie kill base: `+0` (score comes from hit points and special kill rules)
+
+Zombie corpses disappear after 2 seconds and cannot be damaged or scored.
+
+## Match stats
+
+End-of-match screen shows score, total damage, headshot rate, kills, accuracy,
+and deaths. The main menu also has infinite ammo, infinite magazine, difficulty,
+and control reference options.
 
 ## Maps
 

@@ -7,7 +7,7 @@ signal died
 signal attacked
 
 const MAX_HEALTH := 120
-const SPEED := 6.2
+const BASE_SPEED := 6.2
 const MELEE_DAMAGE := 35
 const ATTACK_RANGE := 2.6
 const ATTACK_COOLDOWN := 1.1
@@ -22,6 +22,9 @@ var body_root: Node3D
 var collision_shape: CollisionShape3D
 var _attack_timer := 0.0
 var _downed_time := 0.0
+var _alive_time := 0.0
+var _jump_cooldown := 0.0
+var speed := BASE_SPEED
 var _torso_material: StandardMaterial3D
 
 
@@ -63,6 +66,7 @@ func _build_visuals() -> void:
 
 func _physics_process(delta: float) -> void:
 	_attack_timer = maxf(0.0, _attack_timer - delta)
+	_jump_cooldown = maxf(0.0, _jump_cooldown - delta)
 	if player == null:
 		return
 	if dead:
@@ -78,8 +82,14 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= GRAVITY * delta
 	else:
 		velocity.y = 0.0
+	_alive_time += delta
+	var multiplier := pow(2.0, floor(_alive_time / 20.0))
+	speed = minf(BASE_SPEED * multiplier, 40.0)
 	_face_player()
 	_chase_player()
+	if is_on_floor() and _jump_cooldown <= 0.0 and player.global_position.y - global_position.y > 1.2:
+		velocity.y = 15.0
+		_jump_cooldown = 1.4
 	move_and_slide()
 	_try_attack()
 
@@ -98,8 +108,8 @@ func _chase_player() -> void:
 	var distance := to_player.length()
 	if distance > ATTACK_RANGE * 0.85:
 		var direction := to_player.normalized()
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
+		velocity.x = direction.x * speed
+		velocity.z = direction.z * speed
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
@@ -134,6 +144,11 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 		dead = true
 		_downed_time = 0.0
 		died.emit()
+		var tree := get_tree()
+		if tree != null:
+			tree.create_timer(2.0).timeout.connect(func() -> void:
+				if is_instance_valid(self):
+					queue_free())
 
 
 func resolve_hit_zone(hit_point: Vector3) -> String:
