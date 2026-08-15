@@ -12,6 +12,7 @@ func _ready() -> void:
 	_add_ground()
 	_add_static_cover()
 	_add_destructible_covers()
+	_add_bridge()
 	_add_grass()
 	_add_lights()
 
@@ -95,8 +96,41 @@ func _add_grass() -> void:
 	for i in range(14):
 		var x := randf_range(-36.0, 36.0)
 		var z := randf_range(-22.0, 22.0)
-		var size := Vector3(1.0 + randf_range(0.0, 0.5), 0.6 + randf_range(0.0, 0.3), 1.0 + randf_range(0.0, 0.5))
-		_add_destructible(Vector3(x, 0.0, z), size, bush_color if i % 2 == 0 else tall_color, 30)
+		var grass := TallGrass.new()
+		add_child(grass)
+		grass.global_position = Vector3(x, 0.0, z)
+		grass.setup(30, bush_color if i % 2 == 0 else tall_color)
+
+
+func _add_bridge() -> void:
+	var stone_mat := StandardMaterial3D.new()
+	stone_mat.albedo_color = Color(0.58, 0.55, 0.50)
+	stone_mat.roughness = 0.85
+	var arch_mat := StandardMaterial3D.new()
+	arch_mat.albedo_color = Color(0.48, 0.44, 0.40)
+	arch_mat.roughness = 0.9
+	var wood_mat := StandardMaterial3D.new()
+	wood_mat.albedo_color = Color(0.52, 0.34, 0.20)
+	wood_mat.roughness = 0.8
+
+	_add_box(Vector3(0.0, 4.2, 0.0), Vector3(28.0, 0.5, 8.0), stone_mat)
+	var ramp_angle := atan(4.2 / 6.0)
+	_add_box_rotated(Vector3(17.0, 2.1, 0.0), Vector3(6.2, 0.4, 8.0), Vector3(0.0, 0.0, -ramp_angle), stone_mat)
+	_add_box_rotated(Vector3(-17.0, 2.1, 0.0), Vector3(6.2, 0.4, 8.0), Vector3(0.0, 0.0, ramp_angle), stone_mat)
+
+	_add_box(Vector3(-2.4, 1.3, 0.0), Vector3(1.0, 2.6, 6.2), arch_mat)
+	_add_box(Vector3(2.4, 1.3, 0.0), Vector3(1.0, 2.6, 6.2), arch_mat)
+	var arch_angles := [0.0, 30.0, 60.0, 90.0, 120.0, 150.0, 180.0]
+	for angle_deg in arch_angles:
+		var angle := deg_to_rad(angle_deg)
+		var pos := Vector3(cos(angle) * 2.4, 1.5 + sin(angle) * 2.4, 0.0)
+		_add_box_rotated(pos, Vector3(1.5, 0.7, 6.2), Vector3(0.0, 0.0, angle), arch_mat)
+
+	_add_box(Vector3(0.0, 4.75, -4.0), Vector3(28.0, 0.35, 0.25), wood_mat)
+	_add_box(Vector3(0.0, 4.75, 4.0), Vector3(28.0, 0.35, 0.25), wood_mat)
+
+	_add_destructible(Vector3(0.0, 1.3, -3.5), Vector3(5.5, 2.6, 0.3), Color(0.52, 0.34, 0.20), 120)
+	_add_destructible(Vector3(0.0, 1.3, 3.5), Vector3(5.5, 2.6, 0.3), Color(0.52, 0.34, 0.20), 120)
 
 
 func _add_lights() -> void:
@@ -118,6 +152,24 @@ func _add_box(pos: Vector3, size: Vector3, material: Material) -> void:
 	var body := StaticBody3D.new()
 	body.add_to_group("world")
 	body.position = pos
+	var mesh := MeshInstance3D.new()
+	mesh.mesh = BoxMesh.new()
+	(mesh.mesh as BoxMesh).size = size
+	mesh.material_override = material
+	body.add_child(mesh)
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	add_child(body)
+
+
+func _add_box_rotated(pos: Vector3, size: Vector3, rotation: Vector3, material: Material) -> void:
+	var body := StaticBody3D.new()
+	body.add_to_group("world")
+	body.position = pos
+	body.rotation = rotation
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = BoxMesh.new()
 	(mesh.mesh as BoxMesh).size = size
