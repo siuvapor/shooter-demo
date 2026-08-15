@@ -1,8 +1,9 @@
 # Push to GitHub
 
-The complete project is committed in `godot4-3d-valorant.bundle` as commit
-`d324bc5`. This sandbox has no GitHub credentials and no network certificate
-store, so the final push needs one quick step from your machine.
+The complete project is exported as `godot4-3d-valorant.bundle` (kept locally;
+the bundle is not committed to Git to avoid recursive bundle updates). This
+sandbox has no GitHub credentials and no network certificate store, so the
+final push needs one quick step from your machine.
 
 ## Option A: GitHub CLI
 
