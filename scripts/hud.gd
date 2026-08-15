@@ -16,6 +16,9 @@ var interact_prompt: Label
 var loadout_panel: PanelContainer
 var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
+var zombie_mode := false
+var current_player_score := 0
+var current_bot_score := 0
 
 
 func _ready() -> void:
@@ -169,8 +172,18 @@ func _make_label(size: int, color: Color) -> Label:
 
 
 func update_score(player_score: int, bot_score: int) -> void:
+	current_player_score = player_score
+	current_bot_score = bot_score
 	if score_value != null:
-		score_value.text = "YOU %d   -   %d BOT" % [player_score, bot_score]
+		if zombie_mode:
+			score_value.text = "KILLS %d" % player_score
+		else:
+			score_value.text = "YOU %d   -   %d BOT" % [player_score, bot_score]
+
+
+func set_zombie_mode(enabled: bool) -> void:
+	zombie_mode = enabled
+	update_score(current_player_score, current_bot_score)
 
 
 func show_message(text: String, _final: bool) -> void:

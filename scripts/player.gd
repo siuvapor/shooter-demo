@@ -12,6 +12,7 @@ const WALK_SPEED := 5.4
 const SLOW_WALK_SPEED := 4.5
 const CROUCH_SPEED := 4.1
 const ADS_SPEED := 4.104
+const KNIFE_SPEED := 6.6
 const JUMP_VELOCITY := 7.6
 const GRAVITY := 24.0
 const DEFAULT_MOUSE_SENSITIVITY := 0.0018
@@ -135,6 +136,8 @@ func _physics_process(delta: float) -> void:
 	var speed := WALK_SPEED
 	if crouching:
 		speed = CROUCH_SPEED
+	elif weapon != null and weapon.current_weapon_id == "knife" and not slow_walking:
+		speed = KNIFE_SPEED
 	elif slow_walking:
 		speed = SLOW_WALK_SPEED
 	if ads and is_on_floor():

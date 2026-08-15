@@ -2,8 +2,8 @@ class_name MapBuilderTower
 extends Node3D
 
 
-const ARENA_X := 46.0
-const ARENA_Z := 30.0
+const ARENA_X := 80.0
+const ARENA_Z := 50.0
 const WALL_HEIGHT := 4.0
 
 
@@ -66,26 +66,26 @@ func _add_second_floor() -> void:
 	var floor_mat := StandardMaterial3D.new()
 	floor_mat.albedo_color = Color(0.48, 0.42, 0.33)
 	floor_mat.roughness = 0.9
-	_add_box(Vector3(0.0, 2.85, 0.0), Vector3(24.0, 0.30, 26.0), floor_mat)
+	_add_box(Vector3(0.0, 2.85, 0.0), Vector3(48.0, 0.30, 32.0), floor_mat)
 	var rail_mat := StandardMaterial3D.new()
 	rail_mat.albedo_color = Color(0.70, 0.34, 0.26)
 	rail_mat.roughness = 0.6
-	_add_box(Vector3(-12.0, 3.35, 0.0), Vector3(0.18, 0.7, 26.0), rail_mat)
-	_add_box(Vector3(12.0, 3.35, 0.0), Vector3(0.18, 0.7, 26.0), rail_mat)
-	_add_box(Vector3(0.0, 3.35, -13.0), Vector3(24.0, 0.7, 0.18), rail_mat)
+	_add_box(Vector3(-24.0, 3.35, 0.0), Vector3(0.18, 0.7, 32.0), rail_mat)
+	_add_box(Vector3(24.0, 3.35, 0.0), Vector3(0.18, 0.7, 32.0), rail_mat)
+	_add_box(Vector3(0.0, 3.35, -16.0), Vector3(48.0, 0.7, 0.18), rail_mat)
 
 
 func _add_third_floor() -> void:
 	var floor_mat := StandardMaterial3D.new()
 	floor_mat.albedo_color = Color(0.56, 0.46, 0.34)
 	floor_mat.roughness = 0.9
-	_add_box(Vector3(2.0, 5.85, 0.0), Vector3(20.0, 0.30, 18.0), floor_mat)
+	_add_box(Vector3(0.0, 5.85, 0.0), Vector3(44.0, 0.30, 28.0), floor_mat)
 	var rail_mat := StandardMaterial3D.new()
 	rail_mat.albedo_color = Color(0.35, 0.62, 0.88)
 	rail_mat.roughness = 0.6
-	_add_box(Vector3(-8.0, 6.35, 0.0), Vector3(0.18, 0.7, 18.0), rail_mat)
-	_add_box(Vector3(12.0, 6.35, 0.0), Vector3(0.18, 0.7, 18.0), rail_mat)
-	_add_box(Vector3(2.0, 6.35, -9.0), Vector3(20.0, 0.7, 0.18), rail_mat)
+	_add_box(Vector3(-22.0, 6.35, 0.0), Vector3(0.18, 0.7, 28.0), rail_mat)
+	_add_box(Vector3(22.0, 6.35, 0.0), Vector3(0.18, 0.7, 28.0), rail_mat)
+	_add_box(Vector3(0.0, 6.35, -14.0), Vector3(44.0, 0.7, 0.18), rail_mat)
 
 
 func _add_ramps() -> void:
@@ -93,14 +93,14 @@ func _add_ramps() -> void:
 	ramp_mat.albedo_color = Color(0.66, 0.52, 0.34)
 	ramp_mat.roughness = 0.76
 	var ground_angle := atan(3.0 / 6.0)
-	_add_box_rotated(Vector3(-14.0, 1.5, 0.0), Vector3(6.2, 0.28, 10.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
-	_add_box_rotated(Vector3(3.0, 4.5, 0.0), Vector3(6.2, 0.28, 8.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
+	_add_box_rotated(Vector3(-27.0, 1.5, 0.0), Vector3(6.2, 0.28, 10.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
+	_add_box_rotated(Vector3(-5.0, 4.5, 0.0), Vector3(6.2, 0.28, 8.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
 
 	var side_mat := StandardMaterial3D.new()
 	side_mat.albedo_color = Color(0.45, 0.36, 0.26)
 	side_mat.roughness = 0.85
-	_add_box(Vector3(-14.0, 1.5, -5.0), Vector3(5.8, 0.3, 0.3), side_mat)
-	_add_box(Vector3(-14.0, 1.5, 5.0), Vector3(5.8, 0.3, 0.3), side_mat)
+	_add_box(Vector3(-27.0, 1.5, -5.0), Vector3(5.8, 0.3, 0.3), side_mat)
+	_add_box(Vector3(-27.0, 1.5, 5.0), Vector3(5.8, 0.3, 0.3), side_mat)
 
 
 func _add_ground_cover() -> void:

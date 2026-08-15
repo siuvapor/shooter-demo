@@ -61,10 +61,15 @@ func _build_ui() -> void:
 	vbox.add_child(subtitle)
 	vbox.add_child(HSeparator.new())
 
-	var start_button := _make_button("开始游戏", Color(0.82, 0.22, 0.18), Color(0.95, 0.30, 0.24))
+	var start_button := _make_button("经典对决", Color(0.82, 0.22, 0.18), Color(0.95, 0.30, 0.24))
 	start_button.custom_minimum_size = Vector2(0.0, 54.0)
 	start_button.pressed.connect(_on_start_pressed)
 	vbox.add_child(start_button)
+
+	var zombie_button := _make_button("生化模式", Color(0.18, 0.55, 0.32), Color(0.24, 0.72, 0.42))
+	zombie_button.custom_minimum_size = Vector2(0.0, 54.0)
+	zombie_button.pressed.connect(_on_zombie_pressed)
+	vbox.add_child(zombie_button)
 
 	vbox.add_child(HSeparator.new())
 
@@ -124,6 +129,16 @@ func _sync_controls() -> void:
 
 
 func _on_start_pressed() -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.game_mode = "classic"
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _on_zombie_pressed() -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.game_mode = "zombie"
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
