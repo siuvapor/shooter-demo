@@ -104,8 +104,8 @@ func _on_player_died() -> void:
 	if match_over:
 		return
 	if zombie_mode:
-		respawn_queued = "player"
-		respawn_timer = PLAYER_RESPAWN_DELAY
+		match_over = true
+		hud.show_message("DEFEAT", true)
 		return
 	bot_score += 1
 	hud.update_score(player_score, bot_score)
