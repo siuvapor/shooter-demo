@@ -41,6 +41,7 @@ var _downed_time := 0.0
 
 
 func _ready() -> void:
+	floor_max_angle = deg_to_rad(50.0)
 	set_collision_layer_value(4, true)
 	set_collision_mask_value(1, true)
 	set_collision_mask_value(2, true)

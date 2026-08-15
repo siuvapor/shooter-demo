@@ -80,7 +80,7 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 - Reload animation with magazine swap and a HUD reload progress bar
 - Downed death animation followed by a persistent tombstone for each player
 - In-game weapon loadout panel with clickable weapon buttons
-- Three-layer tower map with jumpable cover and rope teleporters
+- Three-layer tower map with ramps, jump pads, rope teleporters, and angled cover
 - Stronger jump for clearing low crates and stepping up between floors
 - Lock Rifle with auto head-lock and locked-on crosshair brackets
 

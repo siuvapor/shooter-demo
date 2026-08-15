@@ -49,6 +49,7 @@ var _was_on_floor := true
 
 func _ready() -> void:
 	_build_body()
+	floor_max_angle = deg_to_rad(50.0)
 	set_collision_layer_value(2, true)
 	set_collision_mask_value(1, true)
 	set_collision_mask_value(2, true)
