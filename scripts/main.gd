@@ -4,7 +4,7 @@ extends Node3D
 const MAP_SIZE_X := 80.0
 const WIN_SCORE := 10
 const PLAYER_RESPAWN_DELAY := 2.5
-const BOT_RESPAWN_DELAY := 2.0
+const BOT_RESPAWN_DELAY := 0.0
 
 var map_builder: Node3D
 var player: Player

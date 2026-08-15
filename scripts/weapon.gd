@@ -348,6 +348,9 @@ func _resolve_hit(result: Dictionary, damage_multiplier := 1.0) -> void:
 	if collider == null or not collider.is_in_group("damageable"):
 		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal)
 		return
+	if collider.has_method("take_damage") and collider.get("shield_active") == true:
+		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal, Color(0.4, 0.8, 1.0))
+		return
 	var zone := "body"
 	if collider.has_method("resolve_hit_zone"):
 		zone = collider.resolve_hit_zone(result.position)

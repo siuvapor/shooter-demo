@@ -6,8 +6,10 @@ signal health_changed(current: int, maximum: int)
 signal died
 signal respawned
 signal fired
+signal shield_changed(active: bool)
 
 const MAX_HEALTH := 150
+const SPAWN_SHIELD_TIME := 1.0
 const WALK_SPEED := 5.4
 const CROUCH_SPEED := 4.1
 const GRAVITY := 22.0
@@ -40,6 +42,9 @@ var _gun_sfx: AudioStreamPlayer3D
 var _downed_time := 0.0
 var speed_multiplier := 1.0
 var aim_error := AIM_ERROR
+var shield_active := false
+var shield_timer := 0.0
+var shield_mesh: MeshInstance3D
 
 
 func _ready() -> void:
@@ -51,6 +56,9 @@ func _ready() -> void:
 	_build_visuals()
 	_spawn_position = global_position
 	_spawn_yaw = rotation.y
+	shield_active = true
+	shield_timer = SPAWN_SHIELD_TIME
+	_update_shield_visual()
 
 
 func _build_visuals() -> void:
@@ -96,6 +104,22 @@ func _build_visuals() -> void:
 	health_label.modulate = Color(1.0, 1.0, 1.0)
 	add_child(health_label)
 
+	shield_mesh = MeshInstance3D.new()
+	shield_mesh.name = "ShieldMesh"
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.78
+	sphere.height = 1.9
+	var shield_mat := StandardMaterial3D.new()
+	shield_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shield_mat.albedo_color = Color(0.35, 0.75, 1.0, 0.26)
+	shield_mat.emission_enabled = true
+	shield_mat.emission = Color(0.35, 0.75, 1.0)
+	shield_mat.emission_energy_multiplier = 0.7
+	shield_mesh.mesh = sphere
+	shield_mesh.material_override = shield_mat
+	shield_mesh.position = Vector3(0.0, 0.9, 0.0)
+	add_child(shield_mesh)
+
 
 func set_player(target: Player) -> void:
 	player = target
@@ -119,6 +143,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		move_and_slide()
 		return
+	_update_shield(delta)
 	_attack_timer -= delta
 	_shot_cooldown = maxf(0.0, _shot_cooldown - delta)
 	if not is_on_floor():
@@ -227,7 +252,7 @@ func _aim_direction() -> Vector3:
 
 
 func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vector3, _source: Node3D) -> void:
-	if dead:
+	if dead or shield_active:
 		return
 	health = maxi(0, health - amount)
 	health_label.text = str(health)
@@ -258,7 +283,9 @@ func respawn() -> void:
 	_downed_time = 0.0
 	body_root.rotation.x = 0.0
 	body_root.position.y = 0.0
-	health_label.text = str(MAX_HEALTH)
+	shield_active = true
+	shield_timer = SPAWN_SHIELD_TIME
+	_update_shield_visual()
 	if not _waypoints.is_empty():
 		_move_target = _waypoints[randi() % _waypoints.size()]
 	_burst_left = 0
@@ -266,6 +293,23 @@ func respawn() -> void:
 	_shot_cooldown = 0.0
 	health_changed.emit(health, MAX_HEALTH)
 	respawned.emit()
+
+
+func _update_shield(delta: float) -> void:
+	if not shield_active or dead:
+		return
+	shield_timer = maxf(0.0, shield_timer - delta)
+	if shield_timer <= 0.0:
+		shield_active = false
+		_update_shield_visual()
+		shield_changed.emit(false)
+
+
+func _update_shield_visual() -> void:
+	if shield_mesh != null:
+		shield_mesh.visible = shield_active
+	if health_label != null:
+		health_label.text = "SHIELD" if shield_active else str(health)
 
 
 func _flash_damage() -> void:

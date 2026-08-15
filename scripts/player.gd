@@ -7,8 +7,10 @@ signal died
 signal respawned
 signal hit_marker(zone: String)
 signal damaged(amount: int, hit_direction: Vector3)
+signal shield_changed(active: bool)
 
 const MAX_HEALTH := 150
+const SPAWN_SHIELD_TIME := 1.0
 const WALK_SPEED := 5.4
 const SLOW_WALK_SPEED := 4.5
 const CROUCH_SPEED := 4.1
@@ -48,6 +50,8 @@ var _downed_time := 0.0
 var _jump_anim := 0.0
 var _land_anim := 0.0
 var _was_on_floor := true
+var shield_active := false
+var shield_timer := 0.0
 
 
 func _ready() -> void:
@@ -67,6 +71,9 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_spawn_position = global_position
 	_spawn_yaw = rotation.y
+	if settings == null or settings.game_mode != "zombie":
+		shield_active = true
+		shield_timer = SPAWN_SHIELD_TIME
 	health_changed.emit(health, max_health)
 
 
@@ -123,6 +130,7 @@ func _process(_delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_pose()
+	_update_shield(delta)
 	var was_on_floor := is_on_floor()
 	if dead:
 		velocity = Vector3.ZERO
@@ -191,7 +199,7 @@ func resolve_hit_zone(hit_point: Vector3) -> String:
 
 
 func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vector3, _source: Node3D) -> void:
-	if dead:
+	if dead or shield_active:
 		return
 	_play_sound(HURT_SOUND, -4.0, randf_range(0.9, 1.1))
 	var feedback_direction := hit_normal.normalized()
@@ -205,6 +213,9 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 	if health == 0:
 		dead = true
 		_downed_time = 0.0
+		shield_active = false
+		shield_timer = 0.0
+		shield_changed.emit(false)
 		weapon.visible = false
 		died.emit()
 
@@ -230,8 +241,20 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	_land_anim = 0.0
 	_was_on_floor = true
 	weapon.reset_ammo()
+	shield_active = true
+	shield_timer = SPAWN_SHIELD_TIME
+	shield_changed.emit(true)
 	health_changed.emit(health, max_health)
 	respawned.emit()
+
+
+func _update_shield(delta: float) -> void:
+	if not shield_active or dead:
+		return
+	shield_timer = maxf(0.0, shield_timer - delta)
+	if shield_timer <= 0.0:
+		shield_active = false
+		shield_changed.emit(false)
 
 
 func _update_downed(delta: float) -> void:

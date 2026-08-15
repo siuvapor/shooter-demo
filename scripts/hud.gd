@@ -58,9 +58,11 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	player.weapon.weapon_selected.connect(_on_weapon_selected)
 	player.hit_marker.connect(crosshair.trigger_hitmarker)
 	player.damaged.connect(hit_feedback.trigger)
+	player.shield_changed.connect(_on_shield_changed)
 	player.died.connect(_on_player_died_ui)
 	player.respawned.connect(_on_player_respawned_ui)
 	_on_health_changed(player.health, player.max_health)
+	_on_shield_changed(player.shield_active)
 	_on_ammo_changed(player.weapon.magazine, player.weapon.reserve)
 	_on_weapon_selected(player.weapon.current_weapon_id)
 	update_score(0, 0)
@@ -282,6 +284,16 @@ func _on_health_changed(current: int, maximum: int) -> void:
 		return
 	health_value.text = "HP %d / %d" % [current, maximum]
 	health_value.add_theme_color_override("font_color", Color(0.95, 0.25, 0.2) if current <= 40 else Color(1.0, 1.0, 1.0))
+
+
+func _on_shield_changed(active: bool) -> void:
+	if health_value == null or player == null:
+		return
+	if active:
+		health_value.text = "HP %d / %d  [SHIELD]" % [player.health, player.max_health]
+		health_value.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
+	else:
+		_on_health_changed(player.health, player.max_health)
 
 
 func _on_ammo_changed(magazine: int, reserve: int) -> void:
