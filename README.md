@@ -12,6 +12,7 @@ in the style of the Valorant "Duel" maps.
 ![Map](outputs/map_three_floors.png)
 ![Lockon](outputs/lockon.png)
 ![Zombie](outputs/zombie_mode.png)
+![Field](outputs/field_map.png)
 
 ## How to run
 
@@ -66,6 +67,15 @@ disables mouse look while equipped, and keeps the crosshair on the target.
   every 5 seconds, and zombies down without leaving tombstones. The player has
   1000 HP, dies once and it is game over, and zombies can only attack with a
   clear line of sight.
+
+## Maps
+
+- Three-Layer Tower: the default map with vertical/horizontal ropes, jump pads,
+  wormholes, ramps, and three floors.
+- Field Cover: open field map with wooden crates that can be shot apart and
+  grass bushes that provide low cover.
+
+Both maps can be selected from the main menu.
 
 ## Valorant-aligned values
 

@@ -5,6 +5,7 @@ extends Control
 var _fullscreen_check: CheckButton
 var _sensitivity_slider: HSlider
 var _sensitivity_value: Label
+var _map_buttons: Dictionary = {}
 
 
 func _ready() -> void:
@@ -73,6 +74,30 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	var map_title := Label.new()
+	map_title.text = "地图"
+	map_title.add_theme_font_size_override("font_size", 18)
+	map_title.add_theme_color_override("font_color", Color(0.78, 0.82, 0.9))
+	vbox.add_child(map_title)
+
+	var map_row := HBoxContainer.new()
+	map_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(map_row)
+	var tower_button := _make_button("三层塔楼", Color(0.35, 0.62, 0.88), Color(0.45, 0.72, 0.95))
+	tower_button.custom_minimum_size = Vector2(0.0, 48.0)
+	tower_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tower_button.pressed.connect(_on_map_pressed.bind("tower"))
+	_map_buttons["tower"] = tower_button
+	map_row.add_child(tower_button)
+	var field_button := _make_button("野战掩体", Color(0.45, 0.62, 0.30), Color(0.55, 0.72, 0.38))
+	field_button.custom_minimum_size = Vector2(0.0, 48.0)
+	field_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	field_button.pressed.connect(_on_map_pressed.bind("field"))
+	_map_buttons["field"] = field_button
+	map_row.add_child(field_button)
+
+	vbox.add_child(HSeparator.new())
+
 	var settings_title := Label.new()
 	settings_title.text = "设置"
 	settings_title.add_theme_font_size_override("font_size", 18)
@@ -119,13 +144,18 @@ func _sync_controls() -> void:
 	var settings := _settings_node()
 	var fullscreen := false
 	var sensitivity := 0.0018
+	var selected_map := "tower"
 	if settings != null:
 		fullscreen = settings.fullscreen
 		sensitivity = settings.mouse_sensitivity
+		selected_map = settings.selected_map
 	_fullscreen_check.button_pressed = fullscreen
 	var multiplier := sensitivity / 0.0018
 	_sensitivity_slider.set_value_no_signal(multiplier)
 	_sensitivity_value.text = "%.2fx" % multiplier
+	for map_id in _map_buttons:
+		var button: Button = _map_buttons[map_id]
+		button.modulate = Color(1.0, 1.0, 1.0) if map_id == selected_map else Color(0.55, 0.55, 0.58)
 
 
 func _on_start_pressed() -> void:
@@ -157,6 +187,15 @@ func _on_sensitivity_changed(value: float) -> void:
 	if settings != null:
 		settings.set_sensitivity(settings.DEFAULT_SENSITIVITY * value)
 	_sensitivity_value.text = "%.2fx" % value
+
+
+func _on_map_pressed(map_id: String) -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.selected_map = map_id
+	for id in _map_buttons:
+		var button: Button = _map_buttons[id]
+		button.modulate = Color(1.0, 1.0, 1.0) if id == map_id else Color(0.55, 0.55, 0.58)
 
 
 func _settings_node() -> Node:
