@@ -9,6 +9,8 @@ const BOT_RESPAWN_DELAY := 2.0
 var map_builder: Node3D
 var player: Player
 var bot: DuelBot
+var _bots: Array[DuelBot] = []
+var _respawn_bot: DuelBot
 var hud: HUD
 var player_score := 0
 var bot_score := 0
@@ -52,7 +54,7 @@ func _ready() -> void:
 			for i in range(10):
 				_spawn_zombie()
 	else:
-		_spawn_bot()
+		_spawn_bots(_bot_count())
 	hud = HUD.new()
 	add_child(hud)
 	hud.setup(player, bot)
@@ -102,23 +104,33 @@ func _spawn_player() -> void:
 	player.died.connect(_on_player_died)
 
 
-func _spawn_bot() -> void:
-	bot = DuelBot.new()
-	bot.name = "DuelBot"
-	add_child(bot)
-	bot.global_position = Vector3(MAP_SIZE_X * 0.5 - 4.0, 0.0, 0.0)
-	bot.rotation.y = PI * 0.5
-	bot.set_player(player)
-	bot.set_waypoints([
-		Vector3(-32.0, 0.0, 9.0),
-		Vector3(36.0, 0.0, 9.0),
-		Vector3(36.0, 0.0, -9.0),
-		Vector3(-32.0, 0.0, -9.0),
-		Vector3(-4.0, 0.0, -9.0),
-		Vector3(-4.0, 0.0, 9.0),
-	])
-	bot.add_to_group("damageable")
-	bot.died.connect(_on_bot_died)
+func _spawn_bots(count: int) -> void:
+	_bots.clear()
+	var difficulty := _difficulty()
+	for i in range(count):
+		var new_bot := DuelBot.new()
+		new_bot.name = "DuelBot%d" % (i + 1)
+		add_child(new_bot)
+		new_bot.global_position = Vector3(MAP_SIZE_X * 0.5 - 4.0, 0.0, -6.0 + i * 6.0)
+		new_bot.rotation.y = PI * 0.5
+		new_bot.set_player(player)
+		new_bot.set_waypoints([
+			Vector3(-32.0, 0.0, 9.0),
+			Vector3(36.0, 0.0, 9.0),
+			Vector3(36.0, 0.0, -9.0),
+			Vector3(-32.0, 0.0, -9.0),
+			Vector3(-4.0, 0.0, -9.0),
+			Vector3(-4.0, 0.0, 9.0),
+		])
+		if difficulty == "easy":
+			new_bot.aim_error = 0.075
+		if difficulty == "insane":
+			new_bot.speed_multiplier = 1.5
+		new_bot.add_to_group("damageable")
+		new_bot.died.connect(_on_bot_died.bind(new_bot))
+		_bots.append(new_bot)
+	if not _bots.is_empty():
+		bot = _bots[0]
 
 
 func _on_player_died() -> void:
@@ -142,17 +154,18 @@ func _on_player_died() -> void:
 		respawn_timer = PLAYER_RESPAWN_DELAY
 
 
-func _on_bot_died() -> void:
+func _on_bot_died(bot_instance: DuelBot) -> void:
 	if match_over:
 		return
 	player_score += 1
 	hud.update_score(player_score, bot_score)
-	_queue_tombstone(bot.global_position, "BOT", Color(0.9, 0.3, 0.25))
-	if player_score >= WIN_SCORE:
+	_queue_tombstone(bot_instance.global_position, "BOT", Color(0.9, 0.3, 0.25))
+	if player_score >= _win_score():
 		match_over = true
 		hud.show_message("VICTORY", true)
 		_show_end_stats()
 	else:
+		_respawn_bot = bot_instance
 		respawn_queued = "bot"
 		respawn_timer = BOT_RESPAWN_DELAY
 
@@ -278,7 +291,27 @@ func _finish_respawn() -> void:
 	if who == "player":
 		player.respawn_at(Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0), -PI * 0.5)
 	elif who == "bot":
-		bot.respawn()
+		if is_instance_valid(_respawn_bot):
+			_respawn_bot.respawn()
+
+
+func _bot_count() -> int:
+	match _difficulty():
+		"hard":
+			return 2
+		"insane":
+			return 3
+	return 1
+
+
+func _win_score() -> int:
+	var difficulty := _difficulty()
+	return 20 if difficulty == "hard" or difficulty == "insane" else 10
+
+
+func _difficulty() -> String:
+	var settings := get_node_or_null("/root/Settings")
+	return settings.zombie_difficulty if settings != null else "normal"
 
 
 func _queue_tombstone(pos: Vector3, label: String, accent: Color) -> void:

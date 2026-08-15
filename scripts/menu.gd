@@ -9,6 +9,7 @@ var _map_buttons: Dictionary = {}
 var _difficulty_buttons: Dictionary = {}
 var _infinite_ammo_check: CheckButton
 var _infinite_magazine_check: CheckButton
+var _guide_label: Label
 
 
 func _ready() -> void:
@@ -160,7 +161,7 @@ func _build_ui() -> void:
 	vbox.add_child(infinite_mag_row)
 
 	var difficulty_title := Label.new()
-	difficulty_title.text = "生化难度"
+	difficulty_title.text = "难度"
 	difficulty_title.add_theme_font_size_override("font_size", 18)
 	difficulty_title.add_theme_color_override("font_color", Color(0.78, 0.82, 0.9))
 	vbox.add_child(difficulty_title)
@@ -180,6 +181,10 @@ func _build_ui() -> void:
 		difficulty_button.pressed.connect(_on_difficulty_pressed.bind(difficulty_id))
 		_difficulty_buttons[difficulty_id] = difficulty_button
 		difficulty_row.add_child(difficulty_button)
+
+	_guide_label = _make_label(13, Color(0.85, 0.9, 0.95))
+	_guide_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_guide_label)
 
 	var controls_hbox := HBoxContainer.new()
 	controls_hbox.add_theme_constant_override("separation", 16)
@@ -228,6 +233,7 @@ func _sync_controls() -> void:
 	for difficulty_id in _difficulty_buttons:
 		var button: Button = _difficulty_buttons[difficulty_id]
 		button.modulate = Color(1.0, 1.0, 1.0) if difficulty_id == difficulty else Color(0.55, 0.55, 0.58)
+	_update_guide(difficulty)
 
 
 func _on_start_pressed() -> void:
@@ -291,6 +297,21 @@ func _on_difficulty_pressed(difficulty_id: String) -> void:
 	for id in _difficulty_buttons:
 		var button: Button = _difficulty_buttons[id]
 		button.modulate = Color(1.0, 1.0, 1.0) if id == difficulty_id else Color(0.55, 0.55, 0.58)
+	_update_guide(difficulty_id)
+
+
+func _update_guide(difficulty: String) -> void:
+	if _guide_label == null:
+		return
+	match difficulty:
+		"easy":
+			_guide_label.text = "简单：人机枪法较弱；生化 5 秒刷怪，积分 x1。"
+		"hard":
+			_guide_label.text = "困难：人机 2 个敌人，20 杀获胜，被击杀 10 次失败；生化 1 秒刷怪，积分 x2。"
+		"insane":
+			_guide_label.text = "吊炸天：人机 3 个敌人且移速 x1.5，20 杀获胜；生化开局 10 只，0.5 秒刷怪，积分 x4。"
+		_:
+			_guide_label.text = "中等：人机标准强度，10 杀获胜；生化 3 秒刷怪，积分 x1.5。"
 
 
 func _settings_node() -> Node:
