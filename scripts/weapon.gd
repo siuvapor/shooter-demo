@@ -338,6 +338,10 @@ func _heavy_melee_attack() -> void:
 
 func _resolve_hit(result: Dictionary, damage_multiplier := 1.0) -> void:
 	var collider: Node = result.collider
+	if collider != null and collider.is_in_group("destructible") and collider.has_method("take_damage"):
+		var body_damage: int = int(current_def["damage_body"] * damage_multiplier)
+		collider.take_damage(body_damage, "body", result.position, result.normal, player)
+		return
 	if collider == null or not collider.is_in_group("damageable"):
 		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal)
 		return

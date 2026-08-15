@@ -7,6 +7,7 @@ const DEFAULT_SENSITIVITY := 0.0018
 var mouse_sensitivity := DEFAULT_SENSITIVITY
 var fullscreen := false
 var game_mode := "classic"
+var selected_map := "tower"
 
 
 func _ready() -> void:

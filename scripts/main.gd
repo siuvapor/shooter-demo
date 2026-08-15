@@ -6,7 +6,7 @@ const WIN_SCORE := 10
 const PLAYER_RESPAWN_DELAY := 2.5
 const BOT_RESPAWN_DELAY := 2.0
 
-var map_builder: MapBuilderTower
+var map_builder: Node3D
 var player: Player
 var bot: DuelBot
 var hud: HUD
@@ -25,11 +25,15 @@ var _zombies: Array[ZombieEnemy] = []
 func _ready() -> void:
 	var settings := get_node_or_null("/root/Settings")
 	zombie_mode = settings != null and settings.game_mode == "zombie"
-	map_builder = MapBuilderTower.new()
+	var map_id := "tower"
+	if settings != null:
+		map_id = settings.selected_map
+	map_builder = MapBuilderField.new() if map_id == "field" else MapBuilderTower.new()
 	add_child(map_builder)
-	_spawn_ropes()
-	_spawn_jump_pads()
-	_spawn_wormholes()
+	if map_id == "tower":
+		_spawn_ropes()
+		_spawn_jump_pads()
+		_spawn_wormholes()
 	_spawn_player()
 	if zombie_mode:
 		zombie_spawn_timer = 0.5
