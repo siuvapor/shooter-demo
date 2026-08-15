@@ -2,6 +2,8 @@ class_name HUD
 extends CanvasLayer
 
 
+const HIT_FEEDBACK_SCRIPT := preload("res://scripts/hit_feedback.gd")
+
 var player: Player
 var bot: DuelBot
 var health_value: Label
@@ -22,6 +24,7 @@ var _loadout_buttons: Dictionary = {}
 var zombie_mode := false
 var current_player_score := 0
 var current_bot_score := 0
+var hit_feedback: Control
 
 
 func _ready() -> void:
@@ -54,6 +57,7 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	player.weapon.reload_finished.connect(_on_ammo_changed)
 	player.weapon.weapon_selected.connect(_on_weapon_selected)
 	player.hit_marker.connect(crosshair.trigger_hitmarker)
+	player.damaged.connect(hit_feedback.trigger)
 	player.died.connect(_on_player_died_ui)
 	player.respawned.connect(_on_player_respawned_ui)
 	_on_health_changed(player.health, player.max_health)
@@ -77,6 +81,10 @@ func _build_ui() -> void:
 	death_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	death_overlay.visible = false
 	root.add_child(death_overlay)
+
+	hit_feedback = HIT_FEEDBACK_SCRIPT.new()
+	hit_feedback.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(hit_feedback)
 
 	scope_overlay = ScopeOverlay.new()
 	scope_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)

@@ -6,6 +6,7 @@ signal health_changed(current: int, maximum: int)
 signal died
 signal respawned
 signal hit_marker(zone: String)
+signal damaged(amount: int, hit_direction: Vector3)
 
 const MAX_HEALTH := 150
 const WALK_SPEED := 5.4
@@ -193,6 +194,12 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 	if dead:
 		return
 	_play_sound(HURT_SOUND, -4.0, randf_range(0.9, 1.1))
+	var feedback_direction := hit_normal.normalized()
+	if _source is Node3D:
+		var from_source := global_position - (_source as Node3D).global_position
+		if from_source.length_squared() > 0.000001:
+			feedback_direction = from_source.normalized()
+	damaged.emit(amount, feedback_direction)
 	health = maxi(0, health - amount)
 	health_changed.emit(health, max_health)
 	if health == 0:
