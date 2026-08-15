@@ -11,6 +11,7 @@ in the style of the Valorant "Duel" maps.
 ![Knife](outputs/knife_slash.png)
 ![Map](outputs/map_three_floors.png)
 ![Lockon](outputs/lockon.png)
+![Zombie](outputs/zombie_mode.png)
 
 ## How to run
 
@@ -36,6 +37,7 @@ settings. Press `Esc` in-game to exit.
 - `B`: open in-game weapon loadout
 - `F`: inspect weapon
 - `E`: use rope teleporter
+- Knife users move faster than rifle users
 - Knife `LMB`: slash with swing and retract animation
 - Knife `RMB`: heavy stab
 - Operator `RMB`: toggle sniper scope
@@ -56,6 +58,12 @@ slash, heavy stab, and spin-inspect animations. The Operator uses a full-screen
 scope overlay while scoped, with a transparent lens that shows the real scene.
 The Lock Rifle auto-locks onto an enemy head,
 disables mouse look while equipped, and keeps the crosshair on the target.
+
+## Modes
+
+- Classic: 1v1 duel against an AI bot, first to 10 kills.
+- Zombie: endless survival. Knife-only zombies chase the player, one spawns
+  every 5 seconds, and zombies down without leaving tombstones.
 
 ## Valorant-aligned values
 
@@ -80,7 +88,8 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 - Reload animation with magazine swap and a HUD reload progress bar
 - Downed death animation followed by a persistent tombstone for each player
 - In-game weapon loadout panel with clickable weapon buttons
-- Three-layer tower map with ramps, jump pads, rope teleporters, and angled cover
+- Larger three-layer map with ramps, vertical/horizontal ropes, jump pads,
+  wormholes, and angled cover
 - Stronger jump for clearing low crates and stepping up between floors
 - Lock Rifle with auto head-lock and locked-on crosshair brackets
 
