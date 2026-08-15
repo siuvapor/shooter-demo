@@ -9,11 +9,18 @@ var ammo_value: Label
 var score_value: Label
 var message_label: Label
 var crosshair: Crosshair
+var reload_bar: ProgressBar
 
 
 func _ready() -> void:
 	layer = 10
 	_build_ui()
+
+
+func _process(_delta: float) -> void:
+	if player == null or player.weapon == null or reload_bar == null:
+		return
+	reload_bar.value = player.weapon.get_reload_progress()
 
 
 func setup(target_player: Player, target_bot: DuelBot) -> void:
@@ -48,9 +55,15 @@ func _build_ui() -> void:
 	health_value = _make_label(26, Color(1.0, 1.0, 1.0))
 	ammo_value = _make_label(26, Color(1.0, 0.88, 0.55))
 	score_value = _make_label(24, Color(0.75, 0.9, 1.0))
+	reload_bar = ProgressBar.new()
+	reload_bar.custom_minimum_size = Vector2(190.0, 8.0)
+	reload_bar.max_value = 1.0
+	reload_bar.show_percentage = false
+	reload_bar.visible = false
 	top_left.add_child(health_value)
 	top_left.add_child(ammo_value)
 	top_left.add_child(score_value)
+	top_left.add_child(reload_bar)
 
 	message_label = _make_label(72, Color(1.0, 0.95, 0.85))
 	message_label.visible = false
@@ -93,7 +106,11 @@ func _on_ammo_changed(magazine: int, reserve: int) -> void:
 	if ammo_value == null:
 		return
 	ammo_value.text = "%d / %d" % [magazine, reserve]
+	if reload_bar != null:
+		reload_bar.visible = false
 
 
 func _on_reload_started() -> void:
 	ammo_value.text = "RELOADING"
+	if reload_bar != null:
+		reload_bar.visible = true

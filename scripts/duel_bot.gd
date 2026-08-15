@@ -19,6 +19,8 @@ const AIM_ERROR := 0.035
 const HEAD_ZONE_HEIGHT := 1.36
 const LEG_ZONE_HEIGHT := 0.58
 
+const GUNSHOT_SOUND := preload("res://assets/audio/gunshot.wav")
+
 var player: Player
 var health := MAX_HEALTH
 var dead := false
@@ -34,6 +36,7 @@ var _shot_cooldown := 0.0
 var _spawn_position := Vector3.ZERO
 var _spawn_yaw := 0.0
 var _torso_material: StandardMaterial3D
+var _gun_sfx: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -54,6 +57,12 @@ func _build_visuals() -> void:
 	collision_shape.shape = capsule
 	collision_shape.position = Vector3(0.0, 0.9, 0.0)
 	add_child(collision_shape)
+
+	_gun_sfx = AudioStreamPlayer3D.new()
+	_gun_sfx.name = "GunSfx"
+	_gun_sfx.max_db = 3.0
+	_gun_sfx.unit_size = 10.0
+	add_child(_gun_sfx)
 
 	eye = Marker3D.new()
 	eye.name = "Eye"
@@ -182,6 +191,10 @@ func _shoot() -> void:
 	var world := get_tree().current_scene
 	Fx.spawn_tracer(world, from, end, Color(1.0, 0.28, 0.2))
 	Fx.spawn_muzzle_flash(world, from + direction * 0.45, Color(1.0, 0.32, 0.2))
+	_gun_sfx.stream = GUNSHOT_SOUND
+	_gun_sfx.volume_db = -8.0
+	_gun_sfx.pitch_scale = randf_range(0.95, 1.05)
+	_gun_sfx.play()
 	fired.emit()
 
 

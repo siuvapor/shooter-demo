@@ -22,9 +22,13 @@ const CROUCH_EYE := 0.98
 const HEAD_ZONE_HEIGHT := 1.36
 const LEG_ZONE_HEIGHT := 0.58
 
+const HURT_SOUND := preload("res://assets/audio/hurt.wav")
+const FOOTSTEP_SOUND := preload("res://assets/audio/footstep.wav")
+
 var camera: Camera3D
 var weapon: Weapon
 var collision_shape: CollisionShape3D
+var player_sfx: AudioStreamPlayer
 
 var health := MAX_HEALTH
 var dead := false
@@ -35,6 +39,7 @@ var base_pitch := 0.0
 var base_yaw := 0.0
 var _spawn_position := Vector3.ZERO
 var _spawn_yaw := 0.0
+var _footstep_timer := 0.0
 
 
 func _ready() -> void:
@@ -62,6 +67,11 @@ func _build_body() -> void:
 	collision_shape.shape = capsule
 	collision_shape.position = Vector3(0.0, STAND_HEIGHT * 0.5, 0.0)
 	add_child(collision_shape)
+
+	player_sfx = AudioStreamPlayer.new()
+	player_sfx.name = "PlayerSfx"
+	player_sfx.max_polyphony = 4
+	add_child(player_sfx)
 
 	camera = Camera3D.new()
 	camera.name = "Camera3D"
@@ -123,6 +133,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	move_and_slide()
+	_update_footsteps(delta)
 
 
 func _update_pose() -> void:
@@ -154,6 +165,7 @@ func resolve_hit_zone(hit_point: Vector3) -> String:
 func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vector3, _source: Node3D) -> void:
 	if dead:
 		return
+	_play_sound(HURT_SOUND, -4.0, randf_range(0.9, 1.1))
 	health = maxi(0, health - amount)
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
@@ -174,6 +186,38 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	capsule.height = STAND_HEIGHT
 	collision_shape.position.y = STAND_HEIGHT * 0.5
 	camera.position.y = STAND_EYE
+	_footstep_timer = 0.0
 	weapon.reset_ammo()
 	health_changed.emit(health, MAX_HEALTH)
 	respawned.emit()
+
+
+func _update_footsteps(delta: float) -> void:
+	if dead or not is_on_floor():
+		_footstep_timer = 0.15
+		return
+	var speed := get_current_move_speed()
+	if speed < 0.5:
+		_footstep_timer = 0.15
+		return
+	var interval := 0.32
+	var volume := -5.0
+	if crouching:
+		interval = 0.46
+		volume = -10.0
+	elif slow_walking:
+		interval = 0.54
+		volume = -15.0
+	_footstep_timer -= delta
+	if _footstep_timer <= 0.0:
+		_footstep_timer = interval
+		_play_sound(FOOTSTEP_SOUND, volume, randf_range(0.92, 1.08))
+
+
+func _play_sound(stream: AudioStream, volume: float, pitch: float) -> void:
+	if player_sfx == null:
+		return
+	player_sfx.stream = stream
+	player_sfx.volume_db = volume
+	player_sfx.pitch_scale = pitch
+	player_sfx.play()

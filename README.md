@@ -42,6 +42,8 @@ in the style of the Valorant "Duel" maps.
 - Two outside lanes split by a central wall
 - Low crates, tall stacks, and spawn-area blocks for basic peeking
 - Bot patrols both lanes and shoots with burst fire when it has line of sight
+- Procedural sounds for gunfire, reload, hitmarkers, player damage, and footsteps
+- Reload animation with magazine swap and a HUD reload progress bar
 
 The map and AI are generated at runtime from GDScript, so the repository only
 needs the scene and script files.

@@ -34,6 +34,12 @@ const MOVE_PENALTY_AIR := 10.0
 const MOVE_PENALTY_CROUCH := 0.8
 const RECOIL_RECOVERY_TIME := 0.375
 
+const GUNSHOT_SOUND := preload("res://assets/audio/gunshot.wav")
+const RELOAD_START_SOUND := preload("res://assets/audio/reload_start.wav")
+const RELOAD_END_SOUND := preload("res://assets/audio/reload_end.wav")
+const HIT_SOUND := preload("res://assets/audio/hitmarker.wav")
+const HEADSHOT_SOUND := preload("res://assets/audio/headshot.wav")
+
 var player: Player
 var camera: Camera3D
 var magazine := MAGAZINE_SIZE
@@ -50,6 +56,9 @@ var recoil_target_yaw := 0.0
 var recovery_timer := 0.0
 var ads_amount := 0.0
 var ads_target := 0.0
+var _sfx: AudioStreamPlayer
+var _magazine_mesh: MeshInstance3D
+var _mag_done := false
 var _viewmodel_nodes: Array[Node3D] = []
 var _built := false
 
@@ -104,6 +113,7 @@ func fire() -> void:
 	var world := get_tree().current_scene
 	Fx.spawn_tracer(world, from + camera.global_transform.basis.z * -0.4, end, Color(1.0, 0.82, 0.32))
 	Fx.spawn_muzzle_flash(world, from + camera.global_transform.basis.z * -0.45)
+	_play_sound(GUNSHOT_SOUND, -5.0, randf_range(0.95, 1.05))
 	_add_recoil()
 	spray_index += 1
 	spread_bonus = minf(spread_bonus + 0.09, 1.6)
@@ -122,6 +132,7 @@ func _resolve_hit(result: Dictionary) -> void:
 	if collider.has_method("take_damage"):
 		collider.take_damage(damage, zone, result.position, result.normal, player)
 	player.hit_marker.emit(zone)
+	_play_sound(HEADSHOT_SOUND if zone == "head" else HIT_SOUND, -3.0, randf_range(0.95, 1.05))
 	var color := Color(1.0, 0.3, 0.25) if zone == "head" else Color(1.0, 1.0, 1.0)
 	Fx.spawn_damage_number(get_tree().current_scene, result.position, str(damage), color)
 
@@ -205,6 +216,27 @@ func _update_viewmodel(delta: float) -> void:
 	position.y = lerpf(-0.22, -0.18, ads_amount)
 	position.z = lerpf(-0.45, -0.42, ads_amount)
 	rotation.x = lerpf(0.0, -0.02, ads_amount)
+	if reloading:
+		var progress := 1.0 - reload_timer / RELOAD_TIME
+		var drop := 0.0
+		if progress < 0.22:
+			drop = progress / 0.22
+		elif progress < 0.70:
+			drop = 1.0
+		elif progress < 0.90:
+			drop = 1.0 - (progress - 0.70) / 0.20
+		var smooth := drop * drop * (3.0 - 2.0 * drop)
+		position.x += 0.045 * smooth
+		position.y += -0.105 * smooth
+		position.z += 0.145 * smooth
+		rotation.x += 0.55 * smooth
+		rotation.y += -0.42 * smooth
+		rotation.z += 0.16 * smooth
+		if _magazine_mesh != null:
+			_magazine_mesh.visible = progress < 0.12 or progress > 0.78
+		if progress > 0.78 and not _mag_done:
+			_mag_done = true
+			_play_sound(RELOAD_END_SOUND, -2.0, 1.0)
 	if player.get_current_move_speed() > 0.5 and player.is_on_floor() and not player.dead:
 		var t := Time.get_ticks_msec() / 1000.0
 		position.y += sin(t * 9.0) * 0.004
@@ -215,6 +247,10 @@ func start_reload() -> void:
 		return
 	reloading = true
 	reload_timer = RELOAD_TIME
+	_mag_done = false
+	if _magazine_mesh != null:
+		_magazine_mesh.visible = true
+	_play_sound(RELOAD_START_SOUND, -2.0, 1.0)
 	reload_started.emit()
 
 
@@ -224,8 +260,17 @@ func _finish_reload() -> void:
 	magazine += taken
 	reserve -= taken
 	reloading = false
+	_mag_done = false
+	if _magazine_mesh != null:
+		_magazine_mesh.visible = true
 	ammo_changed.emit(magazine, reserve)
 	reload_finished.emit()
+
+
+func get_reload_progress() -> float:
+	if not reloading:
+		return 0.0
+	return clampf(1.0 - reload_timer / RELOAD_TIME, 0.0, 1.0)
 
 
 func reset_ammo() -> void:
@@ -233,6 +278,7 @@ func reset_ammo() -> void:
 	reserve = RESERVE_SIZE
 	reloading = false
 	reload_timer = 0.0
+	_mag_done = false
 	spread_bonus = 0.0
 	spray_index = 0
 	recoil_target_pitch = 0.0
@@ -240,18 +286,33 @@ func reset_ammo() -> void:
 	recovery_timer = 0.0
 	recoil_pitch = 0.0
 	recoil_yaw = 0.0
+	if _magazine_mesh != null:
+		_magazine_mesh.visible = true
 	ammo_changed.emit(magazine, reserve)
 
 
 func build_viewmodel() -> void:
 	_built = true
+	_sfx = AudioStreamPlayer.new()
+	_sfx.name = "Sfx"
+	_sfx.max_polyphony = 4
+	add_child(_sfx)
 	_add_box(Vector3(0.07, 0.10, 0.42), Color(0.12, 0.12, 0.14), Vector3(0.0, 0.0, -0.02))
 	_add_box(Vector3(0.06, 0.08, 0.24), Color(0.20, 0.20, 0.23), Vector3(0.0, 0.01, -0.24))
 	_add_box(Vector3(0.04, 0.04, 0.18), Color(0.10, 0.10, 0.12), Vector3(0.0, 0.035, -0.40))
-	_add_box(Vector3(0.05, 0.16, 0.08), Color(0.16, 0.16, 0.19), Vector3(0.0, -0.10, 0.10))
+	_magazine_mesh = _add_box(Vector3(0.05, 0.16, 0.08), Color(0.16, 0.16, 0.19), Vector3(0.0, -0.10, 0.10))
 	_add_box(Vector3(0.05, 0.12, 0.08), Color(0.13, 0.13, 0.16), Vector3(0.0, -0.08, 0.18))
 	_add_box(Vector3(0.05, 0.06, 0.05), Color(0.78, 0.24, 0.20), Vector3(0.0, 0.09, 0.02))
 	_add_box(Vector3(0.035, 0.035, 0.06), Color(0.78, 0.24, 0.20), Vector3(0.0, 0.035, -0.34))
+
+
+func _play_sound(stream: AudioStream, volume: float, pitch: float) -> void:
+	if _sfx == null:
+		return
+	_sfx.stream = stream
+	_sfx.volume_db = volume
+	_sfx.pitch_scale = pitch
+	_sfx.play()
 
 
 func _add_box(size: Vector3, color: Color, offset: Vector3) -> MeshInstance3D:
