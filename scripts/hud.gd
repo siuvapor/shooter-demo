@@ -14,6 +14,9 @@ var death_overlay: ColorRect
 var scope_overlay: ScopeOverlay
 var interact_prompt: Label
 var loadout_panel: PanelContainer
+var stats_panel: PanelContainer
+var stats_title: Label
+var stats_body: Label
 var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
 var zombie_mode := false
@@ -107,6 +110,24 @@ func _build_ui() -> void:
 	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	root.add_child(message_label)
 
+	stats_panel = PanelContainer.new()
+	stats_panel.visible = false
+	stats_panel.set_anchors_preset(Control.PRESET_CENTER)
+	stats_panel.position = Vector2(-270.0, -220.0)
+	stats_panel.custom_minimum_size = Vector2(540.0, 440.0)
+	stats_panel.add_theme_stylebox_override("panel", _hud_panel_style())
+	root.add_child(stats_panel)
+	var stats_vbox := VBoxContainer.new()
+	stats_vbox.add_theme_constant_override("separation", 10)
+	stats_panel.add_child(stats_vbox)
+	stats_title = _make_label(34, Color(1.0, 0.9, 0.8))
+	stats_title.text = "对局结束"
+	stats_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_vbox.add_child(stats_title)
+	stats_body = _make_label(22, Color(0.9, 0.94, 1.0))
+	stats_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stats_vbox.add_child(stats_body)
+
 	interact_prompt = _make_label(26, Color(1.0, 0.9, 0.7))
 	interact_prompt.text = "E  绳索传送"
 	interact_prompt.visible = false
@@ -191,6 +212,24 @@ func show_message(text: String, _final: bool) -> void:
 	message_label.visible = true
 
 
+func show_end_stats(stats: Dictionary, is_zombie: bool) -> void:
+	stats_panel.visible = true
+	var score_text := "%.1f" % float(stats["score"]) if is_zombie else str(int(stats["score"]))
+	var hits: int = stats["hits"]
+	var shots: int = stats["shots"]
+	var headshots: int = stats["headshots"]
+	var headshot_rate := 0.0 if hits == 0 else float(headshots) / float(hits) * 100.0
+	var accuracy := 0.0 if shots == 0 else float(hits) / float(shots) * 100.0
+	stats_body.text = "积分: %s\n伤害总量: %d\n爆头率: %.1f%%\n击杀: %d\n命中率: %.1f%%\n死亡: %d" % [
+		score_text,
+		int(stats["damage"]),
+		headshot_rate,
+		int(stats["kills"]),
+		accuracy,
+		int(stats["deaths"])
+	]
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
 		loadout_panel.visible = not loadout_panel.visible
@@ -210,7 +249,17 @@ func _on_ammo_changed(magazine: int, reserve: int) -> void:
 	if player != null and player.weapon.current_def["type"] == "melee":
 		ammo_value.text = "MELEE"
 	else:
-		ammo_value.text = "%d / %d" % [magazine, reserve]
+		var settings := get_node_or_null("/root/Settings")
+		var infinite_mag: bool = settings != null and bool(settings.infinite_magazine)
+		var infinite_ammo: bool = settings != null and bool(settings.infinite_ammo)
+		if infinite_mag and infinite_ammo:
+			ammo_value.text = "∞ / ∞"
+		elif infinite_mag:
+			ammo_value.text = "∞ / %d" % reserve
+		elif infinite_ammo:
+			ammo_value.text = "%d / ∞" % magazine
+		else:
+			ammo_value.text = "%d / %d" % [magazine, reserve]
 	if reload_bar != null:
 		reload_bar.visible = false
 

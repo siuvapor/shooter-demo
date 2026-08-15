@@ -8,6 +8,8 @@ signal reload_started
 signal reload_finished
 signal weapon_selected(weapon_id: String)
 signal inspect_started
+signal damage_dealt(amount: int, zone: String, weapon_id: String)
+signal kill_confirmed(weapon_id: String)
 
 const BASE_FOV := 70.0
 const RANGE := 300.0
@@ -280,7 +282,8 @@ func fire() -> void:
 	var def: Dictionary = current_def
 	var is_ads := ads_amount > 0.5
 	fire_cooldown = 1.0 / (def["ads_fire_rate"] if is_ads else def["fire_rate"])
-	magazine -= 1
+	if not _settings_bool("infinite_magazine"):
+		magazine -= 1
 	_ammo[current_weapon_id] = {"magazine": magazine, "reserve": reserve}
 	ammo_changed.emit(magazine, reserve)
 
@@ -350,8 +353,14 @@ func _resolve_hit(result: Dictionary, damage_multiplier := 1.0) -> void:
 		zone = collider.resolve_hit_zone(result.position)
 	var base_damage: int = current_def["damage_head"] if zone == "head" else current_def["damage_body"] if zone == "body" else current_def["damage_leg"]
 	var damage: int = int(base_damage * damage_multiplier)
+	var was_dead: bool = collider.get("dead") == true
+	if was_dead:
+		return
 	if collider.has_method("take_damage"):
 		collider.take_damage(damage, zone, result.position, result.normal, player)
+	damage_dealt.emit(damage, zone, current_weapon_id)
+	if collider.get("dead") == true:
+		kill_confirmed.emit(current_weapon_id)
 	player.hit_marker.emit(zone)
 	_play_sound(HEADSHOT_SOUND if zone == "head" else HIT_SOUND, -3.0, randf_range(0.95, 1.05))
 	var color := Color(1.0, 0.3, 0.25) if zone == "head" else Color(1.0, 1.0, 1.0)
@@ -584,7 +593,7 @@ func start_reload() -> void:
 	if reloading or current_def["type"] == "melee":
 		return
 	var magazine_size: int = current_def["magazine_size"]
-	if magazine == magazine_size or reserve <= 0:
+	if magazine == magazine_size or (reserve <= 0 and not _settings_bool("infinite_ammo")):
 		return
 	reloading = true
 	reload_timer = current_def["reload_time"]
@@ -598,9 +607,11 @@ func start_reload() -> void:
 func _finish_reload() -> void:
 	var magazine_size: int = current_def["magazine_size"]
 	var needed: int = magazine_size - magazine
-	var taken: int = mini(needed, reserve)
+	var taken: int = needed
+	if not _settings_bool("infinite_ammo"):
+		taken = mini(needed, reserve)
+		reserve -= taken
 	magazine += taken
-	reserve -= taken
 	_ammo[current_weapon_id] = {"magazine": magazine, "reserve": reserve}
 	reloading = false
 	_mag_done = false
@@ -766,3 +777,8 @@ func _add_cylinder(radius: float, height: float, color: Color, offset: Vector3, 
 	_viewmodel_root.add_child(mi)
 	_viewmodel_nodes.append(mi)
 	return mi
+
+
+func _settings_bool(property_name: String) -> bool:
+	var settings := get_node_or_null("/root/Settings")
+	return settings != null and settings.get(property_name) == true

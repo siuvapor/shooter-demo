@@ -8,6 +8,9 @@ var mouse_sensitivity := DEFAULT_SENSITIVITY
 var fullscreen := false
 var game_mode := "classic"
 var selected_map := "tower"
+var infinite_ammo := false
+var infinite_magazine := false
+var zombie_difficulty := "normal"
 
 
 func _ready() -> void:
@@ -21,12 +24,18 @@ func load_settings() -> void:
 		return
 	fullscreen = config.get_value("video", "fullscreen", false)
 	mouse_sensitivity = config.get_value("mouse", "sensitivity", DEFAULT_SENSITIVITY)
+	infinite_ammo = config.get_value("game", "infinite_ammo", false)
+	infinite_magazine = config.get_value("game", "infinite_magazine", false)
+	zombie_difficulty = config.get_value("game", "zombie_difficulty", "normal")
 
 
 func save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("mouse", "sensitivity", mouse_sensitivity)
+	config.set_value("game", "infinite_ammo", infinite_ammo)
+	config.set_value("game", "infinite_magazine", infinite_magazine)
+	config.set_value("game", "zombie_difficulty", zombie_difficulty)
 	config.save(SETTINGS_PATH)
 
 
