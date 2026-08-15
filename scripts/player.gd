@@ -12,8 +12,8 @@ const WALK_SPEED := 5.4
 const SLOW_WALK_SPEED := 4.5
 const CROUCH_SPEED := 4.1
 const ADS_SPEED := 4.104
-const JUMP_VELOCITY := 5.86
-const GRAVITY := 22.0
+const JUMP_VELOCITY := 7.6
+const GRAVITY := 24.0
 const DEFAULT_MOUSE_SENSITIVITY := 0.0018
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.1
@@ -42,6 +42,9 @@ var _spawn_position := Vector3.ZERO
 var _spawn_yaw := 0.0
 var _footstep_timer := 0.0
 var _downed_time := 0.0
+var _jump_anim := 0.0
+var _land_anim := 0.0
+var _was_on_floor := true
 
 
 func _ready() -> void:
@@ -92,6 +95,8 @@ func _build_body() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if weapon != null and weapon.current_weapon_id == "lockon":
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		base_yaw -= event.relative.x * mouse_sensitivity
 		base_pitch -= event.relative.y * mouse_sensitivity
@@ -106,10 +111,12 @@ func _process(_delta: float) -> void:
 		else:
 			camera.rotation.x = base_pitch + weapon.recoil_pitch
 			camera.rotation.y = weapon.recoil_yaw
+			_update_vertical_anim(_delta)
 
 
 func _physics_process(delta: float) -> void:
 	_update_pose()
+	var was_on_floor := is_on_floor()
 	if dead:
 		velocity = Vector3.ZERO
 		move_and_slide()
@@ -138,9 +145,13 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= GRAVITY * delta
 	elif Input.is_physical_key_pressed(KEY_SPACE):
 		velocity.y = JUMP_VELOCITY
+		_jump_anim = 0.34
 	else:
 		velocity.y = 0.0
 	move_and_slide()
+	if is_on_floor() and not was_on_floor and velocity.y <= 0.0:
+		_land_anim = 0.28
+	_was_on_floor = is_on_floor()
 	_update_footsteps(delta)
 
 
@@ -200,6 +211,9 @@ func respawn_at(pos: Vector3, yaw: float) -> void:
 	camera.rotation.z = 0.0
 	weapon.visible = true
 	_footstep_timer = 0.0
+	_jump_anim = 0.0
+	_land_anim = 0.0
+	_was_on_floor = true
 	weapon.reset_ammo()
 	health_changed.emit(health, MAX_HEALTH)
 	respawned.emit()
@@ -213,6 +227,32 @@ func _update_downed(delta: float) -> void:
 	camera.rotation.x = base_pitch - 1.35 * eased
 	camera.rotation.y = weapon.recoil_yaw if weapon != null else 0.0
 	camera.rotation.z = 0.08 * eased
+
+
+func _update_vertical_anim(delta: float) -> void:
+	var offset := 0.0
+	if _jump_anim > 0.0:
+		_jump_anim = maxf(0.0, _jump_anim - delta)
+		var t := 1.0 - _jump_anim / 0.34
+		offset += sin(t * PI) * 0.14
+	if _land_anim > 0.0:
+		_land_anim = maxf(0.0, _land_anim - delta)
+		var t := 1.0 - _land_anim / 0.28
+		offset -= sin(t * PI) * 0.08
+	camera.position.y = (CROUCH_EYE if crouching else STAND_EYE) + offset
+
+
+func get_vertical_anim_offset() -> float:
+	return camera.position.y - (CROUCH_EYE if crouching else STAND_EYE)
+
+
+func set_locked_aim(direction: Vector3) -> void:
+	var flat := Vector2(direction.x, direction.z)
+	if flat.length() < 0.001:
+		return
+	base_yaw = atan2(-direction.x, -direction.z)
+	base_pitch = clampf(atan2(direction.y, flat.length()), -1.55, 1.55)
+	rotation.y = base_yaw
 
 
 func _update_footsteps(delta: float) -> void:

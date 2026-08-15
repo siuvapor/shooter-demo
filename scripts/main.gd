@@ -6,7 +6,7 @@ const WIN_SCORE := 10
 const PLAYER_RESPAWN_DELAY := 2.5
 const BOT_RESPAWN_DELAY := 2.0
 
-var map_builder: MapBuilder
+var map_builder: MapBuilderTower
 var player: Player
 var bot: DuelBot
 var hud: HUD
@@ -20,8 +20,9 @@ var _pending_tombstones: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	map_builder = MapBuilder.new()
+	map_builder = MapBuilderTower.new()
 	add_child(map_builder)
+	_spawn_ropes()
 	_spawn_player()
 	_spawn_bot()
 	hud = HUD.new()
@@ -66,12 +67,12 @@ func _spawn_bot() -> void:
 	bot.rotation.y = PI * 0.5
 	bot.set_player(player)
 	bot.set_waypoints([
-		Vector3(11.0, 0.0, 4.0),
-		Vector3(20.0, 0.0, 4.0),
-		Vector3(20.0, 0.0, -4.0),
-		Vector3(11.0, 0.0, -4.0),
-		Vector3(2.0, 0.0, -4.0),
-		Vector3(2.0, 0.0, 4.0),
+		Vector3(-14.0, 0.0, 9.0),
+		Vector3(18.0, 0.0, 9.0),
+		Vector3(18.0, 0.0, -9.0),
+		Vector3(-14.0, 0.0, -9.0),
+		Vector3(-2.0, 0.0, -9.0),
+		Vector3(-2.0, 0.0, 9.0),
 	])
 	bot.add_to_group("damageable")
 	bot.died.connect(_on_bot_died)
@@ -135,3 +136,15 @@ func _spawn_tombstone(pos: Vector3, label: String, accent: Color) -> void:
 		var old: Tombstone = _tombstones.pop_front()
 		if is_instance_valid(old):
 			old.queue_free()
+
+
+func _spawn_ropes() -> void:
+	var rope_one := RopeTeleporter.new()
+	rope_one.name = "RopeGroundToSecond"
+	add_child(rope_one)
+	rope_one.setup(Vector3(11.0, 0.0, -10.0), Vector3(11.0, 3.1, 10.0), Color(0.95, 0.6, 0.2))
+
+	var rope_two := RopeTeleporter.new()
+	rope_two.name = "RopeSecondToThird"
+	add_child(rope_two)
+	rope_two.setup(Vector3(-10.0, 3.1, 10.0), Vector3(-8.0, 6.1, -10.0), Color(0.35, 0.75, 1.0))
