@@ -213,7 +213,11 @@ func setup(owner_player: Player, cam: Camera3D) -> void:
 				"reserve": WEAPON_DEFS[id]["reserve_size"]
 			}
 		_built = true
-	select_weapon_id("vandal", true)
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null and settings.game_mode == "quickscope":
+		select_weapon_id("operator", true)
+	else:
+		select_weapon_id("vandal", true)
 
 
 func _process(delta: float) -> void:
@@ -572,6 +576,9 @@ func _update_viewmodel(delta: float) -> void:
 
 func select_weapon_id(id: String, force := false) -> void:
 	if not WEAPON_DEFS.has(id):
+		return
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null and settings.game_mode == "quickscope" and id != "operator":
 		return
 	if id == current_weapon_id and not force:
 		return

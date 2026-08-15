@@ -45,6 +45,13 @@ var aim_error := AIM_ERROR
 var shield_active := false
 var shield_timer := 0.0
 var shield_mesh: MeshInstance3D
+var quickscope_mode := false
+var _quickscope_action := 1
+var _quickscope_timer := 0.0
+var _quickscope_target := Vector3.ZERO
+var _quickscope_side := 1.0
+var _jump_peek_side := 1.0
+var _rifle_mesh: MeshInstance3D
 
 
 func _ready() -> void:
@@ -90,7 +97,7 @@ func _build_visuals() -> void:
 	_torso_material = torso.material_override as StandardMaterial3D
 	_add_box(body_root, Vector3(0.16, 0.5, 0.20), Color(0.16, 0.16, 0.20), Vector3(-0.38, 0.90, 0.0))
 	_add_box(body_root, Vector3(0.16, 0.5, 0.20), Color(0.16, 0.16, 0.20), Vector3(0.38, 0.90, 0.0))
-	_add_box(body_root, Vector3(0.12, 0.16, 0.72), Color(0.10, 0.10, 0.12), Vector3(0.26, 0.78, -0.38))
+	_rifle_mesh = _add_box(body_root, Vector3(0.12, 0.16, 0.72), Color(0.10, 0.10, 0.12), Vector3(0.26, 0.78, -0.38))
 	_add_box(body_root, Vector3(0.32, 0.32, 0.32), Color(0.94, 0.75, 0.55), Vector3(0.0, 1.58, 0.0))
 	_add_box(body_root, Vector3(0.34, 0.12, 0.34), Color(0.80, 0.20, 0.20), Vector3(0.0, 1.72, 0.0))
 
@@ -136,6 +143,15 @@ func set_spawn_point(pos: Vector3, yaw: float) -> void:
 	_spawn_yaw = yaw
 
 
+func set_quickscope_mode(enabled: bool) -> void:
+	quickscope_mode = enabled
+	speed_multiplier = 3.0
+	if _rifle_mesh != null:
+		_rifle_mesh.visible = false
+	_quickscope_timer = 0.1
+	_choose_quickscope_action()
+
+
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
@@ -149,6 +165,9 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 	_update_shield(delta)
+	if quickscope_mode:
+		_update_quickscope_action(delta)
+		return
 	_attack_timer -= delta
 	_shot_cooldown = maxf(0.0, _shot_cooldown - delta)
 	if not is_on_floor():
@@ -160,6 +179,72 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if _can_see_player():
 		_try_attack()
+
+
+func _update_quickscope_action(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= GRAVITY * delta
+	else:
+		velocity.y = 0.0
+	_quickscope_timer -= delta
+	if _quickscope_timer <= 0.0:
+		_choose_quickscope_action()
+	match _quickscope_action:
+		1:
+			_old_lady_walk(delta)
+		2:
+			_jump_peek(delta)
+		3:
+			_quick_pass(delta)
+	move_and_slide()
+
+
+func _choose_quickscope_action() -> void:
+	_quickscope_action = randi_range(1, 3)
+	_quickscope_timer = randf_range(2.4, 3.4)
+	_quickscope_side = 1.0 if randi() % 2 == 0 else -1.0
+	if _quickscope_action == 1:
+		var side := 1.0 if global_position.x > 0.0 else -1.0
+		_quickscope_target = Vector3(side * randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+	elif _quickscope_action == 2:
+		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
+
+
+func _old_lady_walk(delta: float) -> void:
+	body_root.rotation.x = lerpf(body_root.rotation.x, 0.30, 0.06)
+	_face_player(0.35)
+	var to_target := _quickscope_target - global_position
+	to_target.y = 0.0
+	if to_target.length() < 0.6:
+		_quickscope_side *= -1.0
+		var side := 1.0 if global_position.x > 0.0 else -1.0
+		_quickscope_target = Vector3(side * randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+		to_target = _quickscope_target - global_position
+	velocity = to_target.normalized() * (WALK_SPEED * 0.16)
+
+
+func _jump_peek(delta: float) -> void:
+	body_root.rotation.x = lerpf(body_root.rotation.x, 0.0, 0.1)
+	_face_player(delta)
+	if is_on_floor():
+		_jump_peek_side *= -1.0
+		velocity.y = 7.6
+		velocity.x = _jump_peek_side * WALK_SPEED * 1.8
+		velocity.z = 0.0
+	else:
+		velocity.x = _jump_peek_side * WALK_SPEED * 1.8
+
+
+func _quick_pass(delta: float) -> void:
+	body_root.rotation.x = 0.0
+	_face_player(delta)
+	var target_x := -18.0 if global_position.x > 0.0 else 18.0
+	var to_target := Vector3(target_x, 0.0, 0.0) - global_position
+	to_target.y = 0.0
+	if to_target.length() < 1.0:
+		_choose_quickscope_action()
+		return
+	velocity = to_target.normalized() * (WALK_SPEED * speed_multiplier)
 
 
 func _face_player(delta: float) -> void:
@@ -204,6 +289,8 @@ func _can_see_player() -> bool:
 
 
 func _try_attack() -> void:
+	if quickscope_mode:
+		return
 	if _burst_left <= 0 and _attack_timer <= 0.0:
 		_burst_left = randi_range(3, 6)
 		_attack_timer = randf_range(0.75, 1.25)
@@ -296,6 +383,8 @@ func respawn() -> void:
 	_burst_left = 0
 	_attack_timer = 0.0
 	_shot_cooldown = 0.0
+	if quickscope_mode:
+		_choose_quickscope_action()
 	health_changed.emit(health, MAX_HEALTH)
 	respawned.emit()
 

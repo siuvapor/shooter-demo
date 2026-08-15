@@ -17,6 +17,13 @@ const BOT_SPAWN_POINTS := [
 	Vector3(0.0, 0.0, 22.0),
 	Vector3(-18.0, 0.0, 20.0),
 ]
+const QUICKSCOPE_BOT_SPAWN_POINTS := [
+	Vector3(22.0, 0.0, 0.0),
+	Vector3(18.0, 0.0, -5.0),
+	Vector3(18.0, 0.0, 5.0),
+	Vector3(24.0, 0.0, -2.0),
+	Vector3(24.0, 0.0, 2.0),
+]
 
 var map_builder: Node3D
 var player: Player
@@ -30,6 +37,7 @@ var match_over := false
 var respawn_queued := ""
 var respawn_timer := 0.0
 var zombie_mode := false
+var quickscope_mode := false
 var zombie_spawn_timer := 0.0
 var zombie_spawn_interval := 5.0
 var _tombstones: Array[Tombstone] = []
@@ -49,10 +57,13 @@ var stats := {
 func _ready() -> void:
 	var settings := get_node_or_null("/root/Settings")
 	zombie_mode = settings != null and settings.game_mode == "zombie"
+	quickscope_mode = settings != null and settings.game_mode == "quickscope"
 	var map_id := "tower"
 	if settings != null:
 		map_id = settings.selected_map
-	map_builder = MapBuilderField.new() if map_id == "field" else MapBuilderTower.new()
+	if quickscope_mode:
+		map_id = "quickscope"
+	map_builder = MapBuilderQuickscope.new() if map_id == "quickscope" else MapBuilderField.new() if map_id == "field" else MapBuilderTower.new()
 	add_child(map_builder)
 	if map_id == "tower":
 		_spawn_ropes()
@@ -66,7 +77,7 @@ func _ready() -> void:
 			for i in range(10):
 				_spawn_zombie()
 	else:
-		_spawn_bots(_bot_count())
+		_spawn_bots(1 if quickscope_mode else _bot_count())
 	hud = HUD.new()
 	add_child(hud)
 	hud.setup(player, bot)
@@ -110,7 +121,7 @@ func _spawn_player() -> void:
 	player = Player.new()
 	player.name = "Player"
 	add_child(player)
-	player.global_position = Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0)
+	player.global_position = Vector3(-28.0, 0.0, 0.0) if quickscope_mode else Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0)
 	player.rotation.y = -PI * 0.5
 	player.add_to_group("damageable")
 	player.died.connect(_on_player_died)
@@ -119,7 +130,7 @@ func _spawn_player() -> void:
 func _spawn_bots(count: int) -> void:
 	_bots.clear()
 	var difficulty := _difficulty()
-	var spawn_pool := BOT_SPAWN_POINTS.duplicate()
+	var spawn_pool: Array = QUICKSCOPE_BOT_SPAWN_POINTS.duplicate() if quickscope_mode else BOT_SPAWN_POINTS.duplicate()
 	spawn_pool.shuffle()
 	for i in range(count):
 		var spawn: Dictionary = _bot_spawn_data(spawn_pool, i)
@@ -142,6 +153,8 @@ func _spawn_bots(count: int) -> void:
 			new_bot.aim_error = 0.075
 		if difficulty == "insane":
 			new_bot.speed_multiplier = 1.5
+		if quickscope_mode:
+			new_bot.set_quickscope_mode(true)
 		new_bot.add_to_group("damageable")
 		new_bot.died.connect(_on_bot_died.bind(new_bot))
 		_bots.append(new_bot)

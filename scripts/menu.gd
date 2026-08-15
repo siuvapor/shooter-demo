@@ -217,6 +217,18 @@ func _build_ui() -> void:
 	right_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(right_controls)
 
+	var left_modes := VBoxContainer.new()
+	left_modes.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	left_modes.position = Vector2(42.0, 96.0)
+	left_modes.custom_minimum_size = Vector2(220.0, 0.0)
+	left_modes.add_theme_constant_override("separation", 8)
+	add_child(left_modes)
+	var quickscope_button := _make_button("瞬狙模式", Color(0.20, 0.68, 0.72), Color(0.28, 0.82, 0.88))
+	quickscope_button.custom_minimum_size = Vector2(220.0, 52.0)
+	quickscope_button.tooltip_text = "只能使用狙击枪。专用双高墙地图，中间留门；敌人没有武器不会攻击，会在门后反复做老奶奶走路、跳 peek、快速通过，移速 x3。"
+	quickscope_button.pressed.connect(_on_quickscope_pressed)
+	left_modes.add_child(quickscope_button)
+
 
 func _sync_controls() -> void:
 	var settings := _settings_node()
@@ -262,6 +274,13 @@ func _on_zombie_pressed() -> void:
 	var settings := _settings_node()
 	if settings != null:
 		settings.game_mode = "zombie"
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _on_quickscope_pressed() -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.game_mode = "quickscope"
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 

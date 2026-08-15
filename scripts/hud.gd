@@ -22,9 +22,11 @@ var stats_body: Label
 var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
 var zombie_mode := false
+var quickscope_mode := false
 var current_player_score := 0
 var current_bot_score := 0
 var hit_feedback: Control
+var weapon_bar: Control
 
 
 func _ready() -> void:
@@ -50,6 +52,10 @@ func _process(_delta: float) -> void:
 func setup(target_player: Player, target_bot: DuelBot) -> void:
 	player = target_player
 	bot = target_bot
+	var settings := get_node_or_null("/root/Settings")
+	quickscope_mode = settings != null and settings.game_mode == "quickscope"
+	if quickscope_mode and weapon_bar != null:
+		weapon_bar.visible = false
 	crosshair.player = player
 	player.health_changed.connect(_on_health_changed)
 	player.weapon.ammo_changed.connect(_on_ammo_changed)
@@ -173,6 +179,7 @@ func _build_ui() -> void:
 	bottom_center.position = Vector2(-320.0, -118.0)
 	bottom_center.custom_minimum_size = Vector2(640.0, 64.0)
 	root.add_child(bottom_center)
+	weapon_bar = bottom_center
 	var bar_panel := PanelContainer.new()
 	bar_panel.add_theme_stylebox_override("panel", _hud_panel_style())
 	bottom_center.add_child(bar_panel)
@@ -274,6 +281,8 @@ func _on_quit_to_desktop_pressed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if quickscope_mode:
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
 		loadout_panel.visible = not loadout_panel.visible
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if loadout_panel.visible else Input.MOUSE_MODE_CAPTURED
