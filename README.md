@@ -7,6 +7,8 @@ in the style of the Valorant "Duel" maps.
 ![Screenshot](outputs/screenshot.png)
 ![Menu](outputs/menu.png)
 ![Weapons](outputs/gameplay_weapons.png)
+![Scope](outputs/scope.png)
+![Knife](outputs/knife_slash.png)
 
 ## How to run
 
@@ -30,6 +32,9 @@ settings. Press `Esc` in-game to exit.
 - `1-5`: switch weapon
 - `B`: open in-game weapon loadout
 - `F`: inspect weapon
+- Knife `LMB`: slash with swing and retract animation
+- Knife `RMB`: heavy stab
+- Operator `RMB`: toggle sniper scope
 - `Esc`: exit game
 
 ## Weapons
@@ -41,7 +46,9 @@ settings. Press `Esc` in-game to exit.
 - `5` Butterfly Knife
 
 Each weapon has its own ammo, fire rate, reload time, ADS zoom, and damage
-profile. Press `F` to inspect the equipped weapon.
+profile. Press `F` to inspect the equipped weapon. The Butterfly Knife has
+slash, heavy stab, and spin-inspect animations. The Operator uses a full-screen
+scope overlay while scoped.
 
 ## Valorant-aligned values
 
