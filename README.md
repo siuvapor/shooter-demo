@@ -53,7 +53,8 @@ settings. Press `Esc` in-game to exit.
 Each weapon has its own ammo, fire rate, reload time, ADS zoom, and damage
 profile. Press `F` to inspect the equipped weapon. The Butterfly Knife has
 slash, heavy stab, and spin-inspect animations. The Operator uses a full-screen
-scope overlay while scoped. The Lock Rifle auto-locks onto an enemy head,
+scope overlay while scoped, with a transparent lens that shows the real scene.
+The Lock Rifle auto-locks onto an enemy head,
 disables mouse look while equipped, and keeps the crosshair on the target.
 
 ## Valorant-aligned values

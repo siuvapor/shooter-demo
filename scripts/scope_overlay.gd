@@ -11,11 +11,15 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	var rect := Rect2(Vector2.ZERO, size)
-	draw_rect(rect, Color(0.0, 0.0, 0.0, 1.0))
 	var center := size * 0.5
 	var radius := minf(size.x, size.y) * 0.36
-	draw_circle(center, radius, Color(0.04, 0.06, 0.09, 0.96))
+	var black := Color(0.0, 0.0, 0.0, 1.0)
+	draw_rect(Rect2(0.0, 0.0, size.x, center.y - radius), black)
+	draw_rect(Rect2(0.0, center.y + radius, size.x, size.y - center.y - radius), black)
+	draw_rect(Rect2(0.0, center.y - radius, center.x - radius, radius * 2.0), black)
+	draw_rect(Rect2(center.x + radius, center.y - radius, size.x - center.x - radius, radius * 2.0), black)
+
+	draw_circle(center, radius, Color(0.0, 0.0, 0.0, 0.14))
 	draw_arc(center, radius, 0.0, TAU, 72, Color(0.75, 0.82, 0.9, 0.95), 2.0)
 	draw_arc(center, radius - 12.0, 0.0, TAU, 72, Color(0.35, 0.45, 0.55, 0.6), 1.0)
 
