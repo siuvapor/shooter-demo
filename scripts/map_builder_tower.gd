@@ -12,7 +12,7 @@ func _ready() -> void:
 	_add_ground_floor()
 	_add_second_floor()
 	_add_third_floor()
-	_add_stairs()
+	_add_ramps()
 	_add_ground_cover()
 	_add_upper_cover()
 	_add_lights()
@@ -88,17 +88,19 @@ func _add_third_floor() -> void:
 	_add_box(Vector3(2.0, 6.35, -9.0), Vector3(20.0, 0.7, 0.18), rail_mat)
 
 
-func _add_stairs() -> void:
-	var stair_mat := StandardMaterial3D.new()
-	stair_mat.albedo_color = Color(0.62, 0.50, 0.34)
-	stair_mat.roughness = 0.78
-	_add_box(Vector3(-17.75, 0.55, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
-	_add_box(Vector3(-15.75, 1.65, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
-	_add_box(Vector3(-13.75, 2.75, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
+func _add_ramps() -> void:
+	var ramp_mat := StandardMaterial3D.new()
+	ramp_mat.albedo_color = Color(0.66, 0.52, 0.34)
+	ramp_mat.roughness = 0.76
+	var ground_angle := atan(3.0 / 6.0)
+	_add_box_rotated(Vector3(-14.0, 1.5, 0.0), Vector3(6.2, 0.28, 10.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
+	_add_box_rotated(Vector3(3.0, 4.5, 0.0), Vector3(6.2, 0.28, 8.0), Vector3(0.0, 0.0, ground_angle), ramp_mat)
 
-	_add_box(Vector3(6.75, 3.55, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
-	_add_box(Vector3(8.75, 4.65, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
-	_add_box(Vector3(10.75, 5.75, 0.0), Vector3(2.5, 1.1, 8.0), stair_mat)
+	var side_mat := StandardMaterial3D.new()
+	side_mat.albedo_color = Color(0.45, 0.36, 0.26)
+	side_mat.roughness = 0.85
+	_add_box(Vector3(-14.0, 1.5, -5.0), Vector3(5.8, 0.3, 0.3), side_mat)
+	_add_box(Vector3(-14.0, 1.5, 5.0), Vector3(5.8, 0.3, 0.3), side_mat)
 
 
 func _add_ground_cover() -> void:
@@ -120,6 +122,8 @@ func _add_ground_cover() -> void:
 	_add_box(Vector3(-5.0, 0.55, -7.0), Vector3(1.8, 1.1, 1.8), crate_mat)
 	_add_box(Vector3(5.0, 0.55, -6.0), Vector3(2.0, 1.1, 2.0), crate_mat)
 	_add_box(Vector3(15.0, 0.75, -7.0), Vector3(1.6, 1.5, 1.6), accent_mat)
+	_add_box_rotated(Vector3(-11.0, 0.55, 8.5), Vector3(2.4, 1.1, 1.2), Vector3(0.0, 0.5, 0.0), crate_mat)
+	_add_box_rotated(Vector3(11.0, 0.55, -8.5), Vector3(2.4, 1.1, 1.2), Vector3(0.0, -0.5, 0.0), crate_mat)
 
 
 func _add_upper_cover() -> void:
@@ -138,6 +142,8 @@ func _add_upper_cover() -> void:
 	_add_box(Vector3(6.0, 6.55, -3.0), Vector3(1.6, 1.5, 1.6), accent_mat)
 	_add_box(Vector3(-6.0, 6.35, -5.0), Vector3(2.0, 1.1, 2.0), crate_mat)
 	_add_box(Vector3(8.0, 6.55, 5.0), Vector3(1.6, 1.5, 1.6), crate_mat)
+	_add_box_rotated(Vector3(-4.0, 3.55, 8.5), Vector3(2.4, 1.1, 1.2), Vector3(0.0, 0.6, 0.0), crate_mat)
+	_add_box_rotated(Vector3(9.0, 6.55, -6.0), Vector3(2.2, 1.5, 1.1), Vector3(0.0, -0.45, 0.0), accent_mat)
 
 
 func _add_lights() -> void:
@@ -159,6 +165,25 @@ func _add_box(pos: Vector3, size: Vector3, material: Material) -> void:
 	var body := StaticBody3D.new()
 	body.add_to_group("world")
 	body.position = pos
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = material
+	body.add_child(mi)
+	var shape := CollisionShape3D.new()
+	var box_shape := BoxShape3D.new()
+	box_shape.size = size
+	shape.shape = box_shape
+	body.add_child(shape)
+	add_child(body)
+
+
+func _add_box_rotated(pos: Vector3, size: Vector3, rotation: Vector3, material: Material) -> void:
+	var body := StaticBody3D.new()
+	body.add_to_group("world")
+	body.position = pos
+	body.rotation = rotation
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var mi := MeshInstance3D.new()

@@ -23,6 +23,7 @@ func _ready() -> void:
 	map_builder = MapBuilderTower.new()
 	add_child(map_builder)
 	_spawn_ropes()
+	_spawn_jump_pads()
 	_spawn_player()
 	_spawn_bot()
 	hud = HUD.new()
@@ -148,3 +149,17 @@ func _spawn_ropes() -> void:
 	rope_two.name = "RopeSecondToThird"
 	add_child(rope_two)
 	rope_two.setup(Vector3(-10.0, 3.1, 10.0), Vector3(-8.0, 6.1, -10.0), Color(0.35, 0.75, 1.0))
+
+
+func _spawn_jump_pads() -> void:
+	var pad_one := JumpPad.new()
+	pad_one.name = "JumpPadGround"
+	add_child(pad_one)
+	pad_one.global_position = Vector3(14.0, 0.1, -10.0)
+	pad_one.setup(13.5, Color(0.95, 0.7, 0.2))
+
+	var pad_two := JumpPad.new()
+	pad_two.name = "JumpPadSecond"
+	add_child(pad_two)
+	pad_two.global_position = Vector3(6.0, 3.1, 9.0)
+	pad_two.setup(14.0, Color(0.35, 0.9, 1.0))
