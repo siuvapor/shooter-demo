@@ -10,6 +10,10 @@ var score_value: Label
 var message_label: Label
 var crosshair: Crosshair
 var reload_bar: ProgressBar
+var death_overlay: ColorRect
+var loadout_panel: PanelContainer
+var weapon_buttons: Dictionary = {}
+var _loadout_buttons: Dictionary = {}
 
 
 func _ready() -> void:
@@ -31,9 +35,13 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	player.weapon.ammo_changed.connect(_on_ammo_changed)
 	player.weapon.reload_started.connect(_on_reload_started)
 	player.weapon.reload_finished.connect(_on_ammo_changed)
+	player.weapon.weapon_selected.connect(_on_weapon_selected)
 	player.hit_marker.connect(crosshair.trigger_hitmarker)
+	player.died.connect(_on_player_died_ui)
+	player.respawned.connect(_on_player_respawned_ui)
 	_on_health_changed(player.health, player.MAX_HEALTH)
 	_on_ammo_changed(player.weapon.magazine, player.weapon.reserve)
+	_on_weapon_selected(player.weapon.current_weapon_id)
 	update_score(0, 0)
 
 
@@ -46,6 +54,12 @@ func _build_ui() -> void:
 	crosshair = Crosshair.new()
 	crosshair.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(crosshair)
+
+	death_overlay = ColorRect.new()
+	death_overlay.color = Color(0.45, 0.04, 0.04, 0.30)
+	death_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	death_overlay.visible = false
+	root.add_child(death_overlay)
 
 	var top_left := VBoxContainer.new()
 	top_left.position = Vector2(24.0, 20.0)
@@ -74,6 +88,50 @@ func _build_ui() -> void:
 	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	root.add_child(message_label)
 
+	var bottom_center := CenterContainer.new()
+	bottom_center.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	bottom_center.position = Vector2(-320.0, -118.0)
+	bottom_center.custom_minimum_size = Vector2(640.0, 64.0)
+	root.add_child(bottom_center)
+	var bar_panel := PanelContainer.new()
+	bar_panel.add_theme_stylebox_override("panel", _hud_panel_style())
+	bottom_center.add_child(bar_panel)
+	var weapon_hbox := HBoxContainer.new()
+	weapon_hbox.add_theme_constant_override("separation", 6)
+	bar_panel.add_child(weapon_hbox)
+	for i in Weapon.WEAPON_ORDER.size():
+		var weapon_id: String = Weapon.WEAPON_ORDER[i]
+		var button := Button.new()
+		button.text = "%d %s" % [i + 1, Weapon.WEAPON_DEFS[weapon_id]["name"]]
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_on_weapon_button_pressed.bind(weapon_id))
+		weapon_buttons[weapon_id] = button
+		weapon_hbox.add_child(button)
+
+	loadout_panel = PanelContainer.new()
+	loadout_panel.visible = false
+	loadout_panel.set_anchors_preset(Control.PRESET_CENTER)
+	loadout_panel.position = Vector2(-230.0, -270.0)
+	loadout_panel.custom_minimum_size = Vector2(460.0, 500.0)
+	loadout_panel.add_theme_stylebox_override("panel", _hud_panel_style())
+	root.add_child(loadout_panel)
+	var loadout_vbox := VBoxContainer.new()
+	loadout_vbox.add_theme_constant_override("separation", 10)
+	loadout_panel.add_child(loadout_vbox)
+	var loadout_title := _make_label(28, Color(1.0, 0.9, 0.8))
+	loadout_title.text = "选择枪械"
+	loadout_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	loadout_vbox.add_child(loadout_title)
+	for i in Weapon.WEAPON_ORDER.size():
+		var weapon_id: String = Weapon.WEAPON_ORDER[i]
+		var button := Button.new()
+		button.text = "%d. %s" % [i + 1, Weapon.WEAPON_DEFS[weapon_id]["name"]]
+		button.custom_minimum_size = Vector2(0.0, 46.0)
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_on_weapon_button_pressed.bind(weapon_id))
+		_loadout_buttons[weapon_id] = button
+		loadout_vbox.add_child(button)
+
 
 func _make_label(size: int, color: Color) -> Label:
 	var label := Label.new()
@@ -95,6 +153,12 @@ func show_message(text: String, _final: bool) -> void:
 	message_label.visible = true
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
+		loadout_panel.visible = not loadout_panel.visible
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if loadout_panel.visible else Input.MOUSE_MODE_CAPTURED
+
+
 func _on_health_changed(current: int, maximum: int) -> void:
 	if health_value == null:
 		return
@@ -105,7 +169,10 @@ func _on_health_changed(current: int, maximum: int) -> void:
 func _on_ammo_changed(magazine: int, reserve: int) -> void:
 	if ammo_value == null:
 		return
-	ammo_value.text = "%d / %d" % [magazine, reserve]
+	if player != null and player.weapon.current_def["type"] == "melee":
+		ammo_value.text = "MELEE"
+	else:
+		ammo_value.text = "%d / %d" % [magazine, reserve]
 	if reload_bar != null:
 		reload_bar.visible = false
 
@@ -114,3 +181,44 @@ func _on_reload_started() -> void:
 	ammo_value.text = "RELOADING"
 	if reload_bar != null:
 		reload_bar.visible = true
+
+
+func _on_weapon_selected(weapon_id: String) -> void:
+	for id in weapon_buttons:
+		var button: Button = weapon_buttons[id]
+		button.modulate = Color(1.0, 1.0, 1.0) if id == weapon_id else Color(0.55, 0.55, 0.58)
+	for id in _loadout_buttons:
+		var button: Button = _loadout_buttons[id]
+		button.modulate = Color(1.0, 1.0, 1.0) if id == weapon_id else Color(0.6, 0.6, 0.64)
+	_on_ammo_changed(player.weapon.magazine, player.weapon.reserve)
+
+
+func _on_weapon_button_pressed(weapon_id: String) -> void:
+	if player != null and player.weapon != null:
+		player.weapon.select_weapon_id(weapon_id)
+		loadout_panel.visible = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _on_player_died_ui() -> void:
+	death_overlay.visible = true
+
+
+func _on_player_respawned_ui() -> void:
+	death_overlay.visible = false
+
+
+func _hud_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.07, 0.11, 0.82)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.set_border_width_all(1)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.12)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style

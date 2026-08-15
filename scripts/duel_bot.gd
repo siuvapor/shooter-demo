@@ -37,6 +37,7 @@ var _spawn_position := Vector3.ZERO
 var _spawn_yaw := 0.0
 var _torso_material: StandardMaterial3D
 var _gun_sfx: AudioStreamPlayer3D
+var _downed_time := 0.0
 
 
 func _ready() -> void:
@@ -107,6 +108,11 @@ func _physics_process(delta: float) -> void:
 	if player == null:
 		return
 	if dead:
+		_downed_time += delta
+		var t := clampf(_downed_time / 0.8, 0.0, 1.0)
+		var eased := 1.0 - pow(1.0 - t, 3.0)
+		body_root.rotation.x = -PI * 0.5 * eased
+		body_root.position.y = 0.06 * eased
 		velocity = Vector3.ZERO
 		move_and_slide()
 		return
@@ -225,6 +231,7 @@ func take_damage(amount: int, zone: String, hit_point: Vector3, hit_normal: Vect
 	_flash_damage()
 	if health == 0:
 		dead = true
+		_downed_time = 0.0
 		health_label.text = "DEAD"
 		died.emit()
 
@@ -244,6 +251,9 @@ func respawn() -> void:
 	global_position = _spawn_position
 	rotation = Vector3(0.0, _spawn_yaw, 0.0)
 	velocity = Vector3.ZERO
+	_downed_time = 0.0
+	body_root.rotation.x = 0.0
+	body_root.position.y = 0.0
 	health_label.text = str(MAX_HEALTH)
 	if not _waypoints.is_empty():
 		_move_target = _waypoints[randi() % _waypoints.size()]

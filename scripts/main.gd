@@ -15,6 +15,8 @@ var bot_score := 0
 var match_over := false
 var respawn_queued := ""
 var respawn_timer := 0.0
+var _tombstones: Array[Tombstone] = []
+var _pending_tombstones: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -33,6 +35,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	for i in range(_pending_tombstones.size() - 1, -1, -1):
+		var entry: Dictionary = _pending_tombstones[i]
+		entry["timer"] = entry["timer"] - delta
+		if entry["timer"] <= 0.0:
+			_pending_tombstones.remove_at(i)
+			_spawn_tombstone(entry["pos"], entry["label"], entry["color"])
 	if match_over or respawn_queued == "":
 		return
 	respawn_timer -= delta
@@ -74,6 +82,7 @@ func _on_player_died() -> void:
 		return
 	bot_score += 1
 	hud.update_score(player_score, bot_score)
+	_queue_tombstone(player.global_position, "PLAYER", Color(0.25, 0.55, 0.9))
 	if bot_score >= WIN_SCORE:
 		match_over = true
 		hud.show_message("DEFEAT", true)
@@ -87,6 +96,7 @@ func _on_bot_died() -> void:
 		return
 	player_score += 1
 	hud.update_score(player_score, bot_score)
+	_queue_tombstone(bot.global_position, "BOT", Color(0.9, 0.3, 0.25))
 	if player_score >= WIN_SCORE:
 		match_over = true
 		hud.show_message("VICTORY", true)
@@ -102,3 +112,26 @@ func _finish_respawn() -> void:
 		player.respawn_at(Vector3(-MAP_SIZE_X * 0.5 + 3.0, 0.0, 0.0), -PI * 0.5)
 	elif who == "bot":
 		bot.respawn()
+
+
+func _queue_tombstone(pos: Vector3, label: String, accent: Color) -> void:
+	_pending_tombstones.append({
+		"pos": pos,
+		"label": label,
+		"color": accent,
+		"timer": 1.0
+	})
+
+
+func _spawn_tombstone(pos: Vector3, label: String, accent: Color) -> void:
+	var tombstone := Tombstone.new()
+	tombstone.name = "Tombstone"
+	add_child(tombstone)
+	tombstone.global_position = pos + Vector3(0.0, 0.0, 0.25)
+	tombstone.rotation.y = randf_range(-0.4, 0.4)
+	tombstone.setup(label, accent)
+	_tombstones.append(tombstone)
+	while _tombstones.size() > 8:
+		var old: Tombstone = _tombstones.pop_front()
+		if is_instance_valid(old):
+			old.queue_free()
