@@ -9,7 +9,8 @@ var _map_buttons: Dictionary = {}
 var _difficulty_buttons: Dictionary = {}
 var _infinite_ammo_check: CheckButton
 var _infinite_magazine_check: CheckButton
-var _guide_label: Label
+var _start_button: Button
+var _zombie_button: Button
 
 
 func _ready() -> void:
@@ -70,12 +71,14 @@ func _build_ui() -> void:
 	start_button.custom_minimum_size = Vector2(0.0, 54.0)
 	start_button.tooltip_text = "1v1 对战机器人，先到 10 杀获胜。"
 	start_button.pressed.connect(_on_start_pressed)
+	_start_button = start_button
 	vbox.add_child(start_button)
 
 	var zombie_button := _make_button("生化模式", Color(0.18, 0.55, 0.32), Color(0.24, 0.72, 0.42))
 	zombie_button.custom_minimum_size = Vector2(0.0, 54.0)
 	zombie_button.tooltip_text = "1000 血量，死一次即失败；僵尸每 5 秒生成，只能拿刀近战。"
 	zombie_button.pressed.connect(_on_zombie_pressed)
+	_zombie_button = zombie_button
 	vbox.add_child(zombie_button)
 
 	vbox.add_child(HSeparator.new())
@@ -182,28 +185,25 @@ func _build_ui() -> void:
 		_difficulty_buttons[difficulty_id] = difficulty_button
 		difficulty_row.add_child(difficulty_button)
 
-	_guide_label = _make_label(13, Color(0.85, 0.9, 0.95))
-	_guide_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(_guide_label)
-
-	var controls_hbox := HBoxContainer.new()
-	controls_hbox.add_theme_constant_override("separation", 16)
-	vbox.add_child(controls_hbox)
-	var controls_left := _make_label(14, Color(0.75, 0.82, 0.9))
-	controls_left.text = "WASD 移动\n鼠标 视角\n左键 射击\n右键 开镜\nR 换弹"
-	controls_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	controls_hbox.add_child(controls_left)
-	var controls_right := _make_label(14, Color(0.75, 0.82, 0.9))
-	controls_right.text = "Shift 慢走\nCtrl 蹲\nSpace 跳\nF 检视\nB 选枪  E 绳索  Esc 退出"
-	controls_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	controls_hbox.add_child(controls_right)
-
 	vbox.add_child(HSeparator.new())
 
 	var quit_button := _make_button("退出游戏", Color(0.12, 0.14, 0.18), Color(0.20, 0.24, 0.30))
 	quit_button.custom_minimum_size = Vector2(0.0, 46.0)
 	quit_button.pressed.connect(_on_quit_pressed)
 	vbox.add_child(quit_button)
+
+	var left_controls := _make_label(16, Color(0.85, 0.9, 1.0))
+	left_controls.text = "WASD 移动\n鼠标 视角\n左键 射击\n右键 开镜\nR 换弹"
+	left_controls.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	left_controls.position = Vector2(42.0, -110.0)
+	add_child(left_controls)
+
+	var right_controls := _make_label(16, Color(0.85, 0.9, 1.0))
+	right_controls.text = "Shift 慢走\nCtrl 蹲\nSpace 跳\nF 检视\nB 选枪\nE 绳索\nEsc 退出"
+	right_controls.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	right_controls.position = Vector2(-300.0, -110.0)
+	right_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(right_controls)
 
 
 func _sync_controls() -> void:
@@ -301,17 +301,25 @@ func _on_difficulty_pressed(difficulty_id: String) -> void:
 
 
 func _update_guide(difficulty: String) -> void:
-	if _guide_label == null:
+	if _start_button == null or _zombie_button == null:
 		return
+	var classic_text := ""
+	var zombie_text := ""
 	match difficulty:
 		"easy":
-			_guide_label.text = "简单：人机枪法较弱；生化 5 秒刷怪，积分 x1。"
+			classic_text = "简单：敌人枪法较弱，10 杀获胜。"
+			zombie_text = "简单：5 秒刷一只僵尸，积分 x1。"
 		"hard":
-			_guide_label.text = "困难：人机 2 个敌人，20 杀获胜，被击杀 10 次失败；生化 1 秒刷怪，积分 x2。"
+			classic_text = "困难：2 个敌人，20 杀获胜，被击杀 10 次失败。"
+			zombie_text = "困难：1 秒刷怪，积分 x2。"
 		"insane":
-			_guide_label.text = "吊炸天：人机 3 个敌人且移速 x1.5，20 杀获胜；生化开局 10 只，0.5 秒刷怪，积分 x4。"
+			classic_text = "吊炸天：3 个敌人，移速 x1.5，20 杀获胜。"
+			zombie_text = "吊炸天：开局 10 只，0.5 秒刷怪，积分 x4。"
 		_:
-			_guide_label.text = "中等：人机标准强度，10 杀获胜；生化 3 秒刷怪，积分 x1.5。"
+			classic_text = "中等：标准强度，10 杀获胜。"
+			zombie_text = "中等：3 秒刷怪，积分 x1.5。"
+	_start_button.tooltip_text = "1v1 人机对决。\n" + classic_text
+	_zombie_button.tooltip_text = "生化模式，1000 血，死亡一次即失败。\n" + zombie_text
 
 
 func _settings_node() -> Node:
