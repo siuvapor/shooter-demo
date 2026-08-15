@@ -20,6 +20,7 @@ const DAMAGE_LEG := 34
 const AIM_ERROR := 0.035
 const HEAD_ZONE_HEIGHT := 1.36
 const LEG_ZONE_HEIGHT := 0.58
+const QUICKSCOPE_SPEED_MULTIPLIER := 5.0
 
 const GUNSHOT_SOUND := preload("res://assets/audio/gunshot.wav")
 
@@ -145,9 +146,12 @@ func set_spawn_point(pos: Vector3, yaw: float) -> void:
 
 func set_quickscope_mode(enabled: bool) -> void:
 	quickscope_mode = enabled
-	speed_multiplier = 3.0
+	speed_multiplier = QUICKSCOPE_SPEED_MULTIPLIER
 	if _rifle_mesh != null:
 		_rifle_mesh.visible = false
+	shield_active = false
+	shield_timer = 0.0
+	_update_shield_visual()
 	_quickscope_timer = 0.1
 	_choose_quickscope_action()
 
@@ -204,8 +208,7 @@ func _choose_quickscope_action() -> void:
 	_quickscope_timer = randf_range(2.4, 3.4)
 	_quickscope_side = 1.0 if randi() % 2 == 0 else -1.0
 	if _quickscope_action == 1:
-		var side := 1.0 if global_position.x > 0.0 else -1.0
-		_quickscope_target = Vector3(side * randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+		_quickscope_target = Vector3(randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
 
@@ -217,8 +220,7 @@ func _old_lady_walk(delta: float) -> void:
 	to_target.y = 0.0
 	if to_target.length() < 0.6:
 		_quickscope_side *= -1.0
-		var side := 1.0 if global_position.x > 0.0 else -1.0
-		_quickscope_target = Vector3(side * randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+		_quickscope_target = Vector3(randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
 		to_target = _quickscope_target - global_position
 	velocity = to_target.normalized() * (WALK_SPEED * 0.16)
 
@@ -229,17 +231,18 @@ func _jump_peek(delta: float) -> void:
 	if is_on_floor():
 		_jump_peek_side *= -1.0
 		velocity.y = 7.6
-		velocity.x = _jump_peek_side * WALK_SPEED * 1.8
-		velocity.z = 0.0
+		velocity.x = 0.0
+		velocity.z = _jump_peek_side * WALK_SPEED * speed_multiplier * 0.6
 	else:
-		velocity.x = _jump_peek_side * WALK_SPEED * 1.8
+		velocity.x = 0.0
+		velocity.z = _jump_peek_side * WALK_SPEED * speed_multiplier * 0.6
 
 
 func _quick_pass(delta: float) -> void:
 	body_root.rotation.x = 0.0
 	_face_player(delta)
-	var target_x := -18.0 if global_position.x > 0.0 else 18.0
-	var to_target := Vector3(target_x, 0.0, 0.0) - global_position
+	var target := Vector3(randf_range(4.0, 16.0), 0.0, 6.0 * _quickscope_side)
+	var to_target := target - global_position
 	to_target.y = 0.0
 	if to_target.length() < 1.0:
 		_choose_quickscope_action()
@@ -375,8 +378,12 @@ func respawn() -> void:
 	_downed_time = 0.0
 	body_root.rotation.x = 0.0
 	body_root.position.y = 0.0
-	shield_active = true
-	shield_timer = SPAWN_SHIELD_TIME
+	if quickscope_mode:
+		shield_active = false
+		shield_timer = 0.0
+	else:
+		shield_active = true
+		shield_timer = SPAWN_SHIELD_TIME
 	_update_shield_visual()
 	if not _waypoints.is_empty():
 		_move_target = _waypoints[randi() % _waypoints.size()]

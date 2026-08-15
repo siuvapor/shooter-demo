@@ -188,12 +188,13 @@ func _on_bot_died(bot_instance: DuelBot) -> void:
 		return
 	player_score += 1
 	hud.update_score(player_score, bot_score)
-	_queue_tombstone(bot_instance.global_position, "BOT", Color(0.9, 0.3, 0.25))
 	if player_score >= _win_score():
 		match_over = true
 		hud.show_message("VICTORY", true)
 		_show_end_stats()
 	else:
+		if not quickscope_mode:
+			_queue_tombstone(bot_instance.global_position, "BOT", Color(0.9, 0.3, 0.25))
 		_respawn_bot = bot_instance
 		respawn_queued = "bot"
 		respawn_timer = BOT_RESPAWN_DELAY
@@ -321,7 +322,7 @@ func _finish_respawn() -> void:
 		player.respawn_at(Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0), -PI * 0.5)
 	elif who == "bot":
 		if is_instance_valid(_respawn_bot):
-			var spawn_pool := BOT_SPAWN_POINTS.duplicate()
+			var spawn_pool: Array = QUICKSCOPE_BOT_SPAWN_POINTS.duplicate() if quickscope_mode else BOT_SPAWN_POINTS.duplicate()
 			spawn_pool.shuffle()
 			var spawn: Dictionary = _bot_spawn_data(spawn_pool, 0)
 			_respawn_bot.set_spawn_point(spawn["pos"], spawn["yaw"])
@@ -357,6 +358,8 @@ func _difficulty() -> String:
 
 
 func _queue_tombstone(pos: Vector3, label: String, accent: Color) -> void:
+	if quickscope_mode:
+		return
 	_pending_tombstones.append({
 		"pos": pos,
 		"label": label,
