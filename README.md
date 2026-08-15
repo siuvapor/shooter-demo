@@ -91,7 +91,7 @@ Zombie corpses disappear after 2 seconds and cannot be damaged or scored.
 End-of-match screen shows score, total damage, headshot rate, kills, accuracy,
 and deaths, plus buttons to return to the menu, play again, or quit to desktop.
 The main menu also has infinite ammo, infinite magazine, difficulty, and a
-two-column control reference.
+left/right control reference, with difficulty details shown in mode tooltips.
 
 ## Maps
 
