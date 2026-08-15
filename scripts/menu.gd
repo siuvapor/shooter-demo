@@ -181,10 +181,17 @@ func _build_ui() -> void:
 		_difficulty_buttons[difficulty_id] = difficulty_button
 		difficulty_row.add_child(difficulty_button)
 
-	var controls_label := _make_label(15, Color(0.75, 0.82, 0.9))
-	controls_label.text = "WASD 移动  鼠标 视角  左键 射击  右键 开镜  R 换弹  Shift 慢走  Ctrl 蹲  Space 跳  F 检视  B 选枪  E 绳索  Esc 退出"
-	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(controls_label)
+	var controls_hbox := HBoxContainer.new()
+	controls_hbox.add_theme_constant_override("separation", 16)
+	vbox.add_child(controls_hbox)
+	var controls_left := _make_label(14, Color(0.75, 0.82, 0.9))
+	controls_left.text = "WASD 移动\n鼠标 视角\n左键 射击\n右键 开镜\nR 换弹"
+	controls_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls_hbox.add_child(controls_left)
+	var controls_right := _make_label(14, Color(0.75, 0.82, 0.9))
+	controls_right.text = "Shift 慢走\nCtrl 蹲\nSpace 跳\nF 检视\nB 选枪  E 绳索  Esc 退出"
+	controls_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls_hbox.add_child(controls_right)
 
 	vbox.add_child(HSeparator.new())
 
