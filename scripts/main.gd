@@ -5,6 +5,7 @@ const MAP_SIZE_X := 80.0
 const WIN_SCORE := 10
 const PLAYER_RESPAWN_DELAY := 2.5
 const BOT_RESPAWN_DELAY := 0.0
+const QUICKSCOPE_DURATION := 60.0
 const BOT_SPAWN_POINTS := [
 	Vector3(-34.0, 0.0, 14.0),
 	Vector3(-30.0, 0.0, -16.0),
@@ -38,6 +39,7 @@ var respawn_queued := ""
 var respawn_timer := 0.0
 var zombie_mode := false
 var quickscope_mode := false
+var quickscope_time_left := QUICKSCOPE_DURATION
 var zombie_spawn_timer := 0.0
 var zombie_spawn_interval := 5.0
 var _tombstones: Array[Tombstone] = []
@@ -82,6 +84,8 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(player, bot)
 	hud.set_zombie_mode(zombie_mode)
+	if quickscope_mode:
+		hud.update_time(quickscope_time_left)
 	player.weapon.fired.connect(_on_shot_fired)
 	player.weapon.damage_dealt.connect(_on_damage_dealt)
 	player.weapon.kill_confirmed.connect(_on_kill_confirmed)
@@ -99,6 +103,13 @@ func _physics_process(delta: float) -> void:
 		if entry["timer"] <= 0.0:
 			_pending_tombstones.remove_at(i)
 			_spawn_tombstone(entry["pos"], entry["label"], entry["color"])
+	if quickscope_mode and not match_over:
+		quickscope_time_left = maxf(0.0, quickscope_time_left - delta)
+		hud.update_time(quickscope_time_left)
+		if quickscope_time_left <= 0.0:
+			match_over = true
+			hud.show_message("TIME UP", true)
+			_show_end_stats()
 	if match_over or respawn_queued == "":
 		if zombie_mode:
 			zombie_spawn_timer -= delta

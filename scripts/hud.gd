@@ -9,6 +9,7 @@ var bot: DuelBot
 var health_value: Label
 var ammo_value: Label
 var score_value: Label
+var time_value: Label
 var message_label: Label
 var crosshair: Crosshair
 var reload_bar: ProgressBar
@@ -56,6 +57,8 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	quickscope_mode = settings != null and settings.game_mode == "quickscope"
 	if quickscope_mode and weapon_bar != null:
 		weapon_bar.visible = false
+	if quickscope_mode and time_value != null:
+		time_value.visible = true
 	crosshair.player = player
 	player.health_changed.connect(_on_health_changed)
 	player.weapon.ammo_changed.connect(_on_ammo_changed)
@@ -107,6 +110,8 @@ func _build_ui() -> void:
 	health_value = _make_label(26, Color(1.0, 1.0, 1.0))
 	ammo_value = _make_label(26, Color(1.0, 0.88, 0.55))
 	score_value = _make_label(24, Color(0.75, 0.9, 1.0))
+	time_value = _make_label(24, Color(0.95, 0.75, 0.45))
+	time_value.visible = false
 	reload_bar = ProgressBar.new()
 	reload_bar.custom_minimum_size = Vector2(190.0, 8.0)
 	reload_bar.max_value = 1.0
@@ -115,6 +120,7 @@ func _build_ui() -> void:
 	top_left.add_child(health_value)
 	top_left.add_child(ammo_value)
 	top_left.add_child(score_value)
+	top_left.add_child(time_value)
 	top_left.add_child(reload_bar)
 
 	message_label = _make_label(72, Color(1.0, 0.95, 0.85))
@@ -240,6 +246,14 @@ func update_score(player_score: int, bot_score: int) -> void:
 			score_value.text = "YOU %d   -   %d BOT" % [player_score, bot_score]
 
 
+func update_time(seconds_left: float) -> void:
+	if time_value == null:
+		return
+	var seconds := maxi(0, int(ceil(seconds_left)))
+	time_value.text = "TIME %02d" % seconds
+	time_value.add_theme_color_override("font_color", Color(0.95, 0.3, 0.2) if seconds <= 10 else Color(0.95, 0.75, 0.45))
+
+
 func set_zombie_mode(enabled: bool) -> void:
 	zombie_mode = enabled
 	update_score(current_player_score, current_bot_score)
@@ -321,7 +335,7 @@ func _on_ammo_changed(magazine: int, reserve: int) -> void:
 		ammo_value.text = "MELEE"
 	else:
 		var settings := get_node_or_null("/root/Settings")
-		var infinite_mag: bool = settings != null and bool(settings.infinite_magazine)
+		var infinite_mag: bool = quickscope_mode or (settings != null and bool(settings.infinite_magazine))
 		var infinite_ammo: bool = settings != null and bool(settings.infinite_ammo)
 		if infinite_mag and infinite_ammo:
 			ammo_value.text = "∞ / ∞"

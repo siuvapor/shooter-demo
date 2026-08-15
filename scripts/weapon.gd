@@ -184,6 +184,8 @@ var inspect_timer := 0.0
 var slash_timer := 0.0
 var slash_duration := 0.42
 var slash_mode := ""
+var bolt_timer := 0.0
+var bolt_duration := 1.0
 var sniper_scope_on := false
 var _rmb_was_down := false
 var _lock_target: Node3D
@@ -232,6 +234,8 @@ func _process(delta: float) -> void:
 		inspect_timer = maxf(0.0, inspect_timer - delta)
 	if slash_timer > 0.0:
 		slash_timer = maxf(0.0, slash_timer - delta)
+	if bolt_timer > 0.0:
+		bolt_timer = maxf(0.0, bolt_timer - delta)
 	if reloading:
 		reload_timer -= delta
 		if reload_timer <= 0.0:
@@ -244,7 +248,8 @@ func _process(delta: float) -> void:
 			if fire_cooldown <= 0.0:
 				_heavy_melee_attack()
 		elif current_def["type"] == "sniper":
-			sniper_scope_on = not sniper_scope_on
+			if bolt_timer <= 0.0:
+				sniper_scope_on = not sniper_scope_on
 	_rmb_was_down = rmb_down
 	if current_def["type"] == "sniper":
 		ads_target = 1.0 if sniper_scope_on else 0.0
@@ -286,7 +291,11 @@ func fire() -> void:
 	var def: Dictionary = current_def
 	var is_ads := ads_amount > 0.5
 	fire_cooldown = 1.0 / (def["ads_fire_rate"] if is_ads else def["fire_rate"])
-	if not _settings_bool("infinite_magazine"):
+	if _is_quickscope_mode() and current_weapon_id == "operator":
+		sniper_scope_on = false
+		bolt_timer = fire_cooldown
+		bolt_duration = fire_cooldown
+	if not _has_infinite_magazine():
 		magazine -= 1
 	_ammo[current_weapon_id] = {"magazine": magazine, "reserve": reserve}
 	ammo_changed.emit(magazine, reserve)
@@ -486,7 +495,10 @@ func is_locked() -> bool:
 
 
 func _update_ads(delta: float) -> void:
-	ads_amount = move_toward(ads_amount, ads_target, delta * 10.0)
+	if bolt_timer > 0.0 and _is_quickscope_mode() and current_weapon_id == "operator":
+		ads_amount = maxf(0.0, ads_amount - delta / maxf(bolt_duration, 0.001))
+	else:
+		ads_amount = move_toward(ads_amount, ads_target, delta * 10.0)
 	camera.fov = lerpf(BASE_FOV, BASE_FOV / current_def["ads_zoom"], ads_amount)
 
 
@@ -563,6 +575,15 @@ func _update_viewmodel(delta: float) -> void:
 			position.y += retract * -0.05
 			position.z += retract * 0.06
 
+	if bolt_timer > 0.0 and current_weapon_id == "operator":
+		var p := 1.0 - bolt_timer / maxf(bolt_duration, 0.001)
+		var bolt := sin(p * PI)
+		position.y += bolt * 0.10
+		position.z += bolt * 0.16
+		rotation.x += bolt * 0.85
+		rotation.y += sin(p * PI * 2.0) * 0.42
+		rotation.z += sin(p * PI * 2.0) * 0.12
+
 	if current_def["type"] == "special":
 		var locked := _lock_target != null
 		position.y += -0.02 + (0.02 if locked else 0.0)
@@ -593,7 +614,7 @@ func select_weapon_id(id: String, force := false) -> void:
 
 
 func start_inspect() -> void:
-	if reloading or inspect_timer > 0.0 or slash_timer > 0.0 or player == null or player.dead:
+	if reloading or inspect_timer > 0.0 or slash_timer > 0.0 or bolt_timer > 0.0 or player == null or player.dead:
 		return
 	inspect_timer = INSPECT_DURATION
 	inspect_started.emit()
@@ -672,6 +693,8 @@ func _reset_weapon_state() -> void:
 	inspect_timer = 0.0
 	slash_timer = 0.0
 	slash_mode = ""
+	bolt_timer = 0.0
+	bolt_duration = 1.0
 	sniper_scope_on = false
 	_rmb_was_down = false
 	_lock_target = null
@@ -792,3 +815,12 @@ func _add_cylinder(radius: float, height: float, color: Color, offset: Vector3, 
 func _settings_bool(property_name: String) -> bool:
 	var settings := get_node_or_null("/root/Settings")
 	return settings != null and settings.get(property_name) == true
+
+
+func _is_quickscope_mode() -> bool:
+	var settings := get_node_or_null("/root/Settings")
+	return settings != null and settings.game_mode == "quickscope"
+
+
+func _has_infinite_magazine() -> bool:
+	return _is_quickscope_mode() or _settings_bool("infinite_magazine")
