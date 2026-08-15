@@ -79,6 +79,9 @@ disables mouse look while equipped, and keeps the crosshair on the target.
 - Lock Rifle kill: `-2`
 - Zombie kill base: `+0` (score comes from hit points and special kill rules)
 
+Zombie difficulty score multiplier: Easy `1x`, Normal `1.5x`, Hard `2x`,
+Insane `4x`.
+
 Zombie corpses disappear after 2 seconds and cannot be damaged or scored.
 
 ## Match stats
