@@ -19,11 +19,12 @@ const BOT_SPAWN_POINTS := [
 	Vector3(-18.0, 0.0, 20.0),
 ]
 const QUICKSCOPE_BOT_SPAWN_POINTS := [
-	Vector3(22.0, 0.0, 0.0),
-	Vector3(18.0, 0.0, -5.0),
-	Vector3(18.0, 0.0, 5.0),
-	Vector3(24.0, 0.0, -2.0),
-	Vector3(24.0, 0.0, 2.0),
+	Vector3(2.0, 0.0, -12.0),
+	Vector3(2.0, 0.0, -8.0),
+	Vector3(2.0, 0.0, 8.0),
+	Vector3(2.0, 0.0, 12.0),
+	Vector3(2.0, 0.0, -16.0),
+	Vector3(2.0, 0.0, 16.0),
 ]
 
 var map_builder: Node3D

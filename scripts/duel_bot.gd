@@ -221,10 +221,10 @@ func _choose_quickscope_action() -> void:
 		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
-		_peek_hidden_left_z = -4.4
-		_peek_hidden_right_z = 4.4
-		_peek_target_z = _peek_hidden_left_z if randi() % 2 == 0 else _peek_hidden_right_z
-		_peek_wait = 0.15
+		_peek_hidden_left_z = -4.6
+		_peek_hidden_right_z = 4.6
+		_peek_target_z = _peek_hidden_left_z if global_position.z < 0.0 else _peek_hidden_right_z
+		_peek_wait = 0.2
 
 
 func _old_lady_walk(delta: float) -> void:
