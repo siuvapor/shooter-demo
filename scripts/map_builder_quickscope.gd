@@ -100,7 +100,7 @@ func _add_meme_posters() -> bool:
 		{"pos": Vector3(-0.38, 4.0, -7.4), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
 		{"pos": Vector3(-0.38, 4.0, 7.4), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
 		{"pos": Vector3(-0.38, 4.0, 15.8), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
-		{"pos": Vector3(-0.46, 6.3, 0.0), "rot": PI * 0.5, "cover": Vector2(6.4, 1.1), "fit": true},
+		{"pos": Vector3(-34.9, 4.0, 0.0), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
 	]
 	var placed := false
 	for i in MEME_TEXTURES.size():
