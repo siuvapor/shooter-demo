@@ -52,8 +52,10 @@ var _quickscope_timer := 0.0
 var _quickscope_target := Vector3.ZERO
 var _quickscope_side := 1.0
 var _jump_peek_side := 1.0
-var _peek_center_z := 0.0
-var _peek_target_z := 0.0
+var _peek_home_x := 2.6
+var _peek_front_x := 1.0
+var _peek_target_x := 2.6
+var _peek_wait := 0.15
 var _rifle_mesh: MeshInstance3D
 
 
@@ -219,8 +221,10 @@ func _choose_quickscope_action() -> void:
 		_quickscope_target = Vector3(randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
-		_peek_center_z = clampf(global_position.z, -1.4, 1.4)
-		_peek_target_z = _peek_center_z + _jump_peek_side * 1.1
+		_peek_home_x = 2.6
+		_peek_front_x = 1.0
+		_peek_target_x = _peek_home_x
+		_peek_wait = 0.15
 
 
 func _old_lady_walk(delta: float) -> void:
@@ -241,16 +245,25 @@ func _jump_peek(delta: float) -> void:
 	body_root.rotation.x = lerpf(body_root.rotation.x, 0.0, 0.1)
 	body_root.rotation.z = lerpf(body_root.rotation.z, 0.0, 0.1)
 	_face_player(delta)
+	_peek_wait = maxf(0.0, _peek_wait - delta)
 	if is_on_floor():
-		if absf(global_position.z - _peek_target_z) < 0.3:
-			_jump_peek_side *= -1.0
-			_peek_target_z = _peek_center_z + _jump_peek_side * 1.1
-		velocity.y = 7.6
-		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 3.6, -5.6, 5.6)
+		if _peek_wait > 0.0:
+			velocity.x = 0.0
+			velocity.z = 0.0
+			velocity.y = 0.0
+			return
+		if absf(global_position.x - _peek_target_x) < 0.22:
+			if _peek_target_x == _peek_home_x:
+				_peek_wait = 0.15
+				_peek_target_x = _peek_front_x
+			else:
+				velocity.y = 7.6
+				_peek_target_x = _peek_home_x
+		velocity.x = clampf((_peek_target_x - global_position.x) * 5.0, -9.0, 9.0)
+		velocity.z = 0.0
 	else:
-		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 3.6, -5.6, 5.6)
+		velocity.x = clampf((_peek_target_x - global_position.x) * 5.0, -9.0, 9.0)
+		velocity.z = 0.0
 
 
 func _quick_pass(delta: float) -> void:
