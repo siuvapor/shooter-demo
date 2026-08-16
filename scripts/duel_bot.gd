@@ -225,6 +225,8 @@ func _choose_quickscope_action() -> void:
 		_peek_hidden_right_z = 4.6
 		_peek_target_z = _peek_hidden_left_z if global_position.z < 0.0 else _peek_hidden_right_z
 		_peek_wait = 0.2
+	elif _quickscope_action == 3:
+		_quickscope_side = 1.0 if global_position.z < 0.0 else -1.0
 
 
 func _old_lady_walk(delta: float) -> void:
@@ -275,7 +277,7 @@ func _quick_pass(delta: float) -> void:
 	body_root.rotation.x = 0.0
 	body_root.rotation.z = lerpf(body_root.rotation.z, 0.0, 0.1)
 	_face_player(delta)
-	var target := Vector3(randf_range(1.2, 3.0), 0.0, 2.2 * _quickscope_side)
+	var target := Vector3(2.0, 0.0, 8.0 * _quickscope_side)
 	var to_target := target - global_position
 	to_target.y = 0.0
 	if to_target.length() < 1.0:
