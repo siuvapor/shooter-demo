@@ -52,9 +52,9 @@ var _quickscope_timer := 0.0
 var _quickscope_target := Vector3.ZERO
 var _quickscope_side := 1.0
 var _jump_peek_side := 1.0
-var _peek_hidden_left_z := -4.4
-var _peek_hidden_right_z := 4.4
-var _peek_target_z := -4.4
+var _peek_hidden_z := -4.6
+var _peek_out_z := -3.0
+var _peek_target_z := -4.6
 var _peek_wait := 0.15
 var _rifle_mesh: MeshInstance3D
 
@@ -221,9 +221,10 @@ func _choose_quickscope_action() -> void:
 		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
-		_peek_hidden_left_z = -4.6
-		_peek_hidden_right_z = 4.6
-		_peek_target_z = _peek_hidden_left_z if global_position.z < 0.0 else _peek_hidden_right_z
+		var side := -1.0 if global_position.z < 0.0 else 1.0
+		_peek_hidden_z = side * 4.6
+		_peek_out_z = side * 3.0
+		_peek_target_z = _peek_hidden_z
 		_peek_wait = 0.2
 	elif _quickscope_action == 3:
 		_quickscope_side = 1.0 if global_position.z < 0.0 else -1.0
@@ -260,17 +261,17 @@ func _jump_peek(delta: float) -> void:
 			velocity.y = 0.0
 			return
 		if absf(global_position.z - _peek_target_z) < 0.3:
-			_peek_wait = 0.15
-			_peek_target_z = _peek_hidden_right_z if _peek_target_z == _peek_hidden_left_z else _peek_hidden_left_z
+			if _peek_target_z == _peek_hidden_z:
+				_peek_wait = 0.15
+				_peek_target_z = _peek_out_z
+			else:
+				velocity.y = 7.6
+				_peek_target_z = _peek_hidden_z
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 6.0, -18.0, 18.0)
-		if absf(global_position.z) <= 3.2:
-			velocity.y = 7.6
-		else:
-			velocity.y = 0.0
+		velocity.z = clampf((_peek_target_z - global_position.z) * 12.0, -18.0, 18.0)
 	else:
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 6.0, -18.0, 18.0)
+		velocity.z = clampf((_peek_target_z - global_position.z) * 12.0, -18.0, 18.0)
 
 
 func _quick_pass(delta: float) -> void:
