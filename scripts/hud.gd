@@ -57,8 +57,12 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	var settings := get_node_or_null("/root/Settings")
 	quickscope_mode = settings != null and settings.game_mode == "quickscope"
 	parkour_mode = settings != null and settings.game_mode == "parkour"
-	if (quickscope_mode or parkour_mode) and weapon_bar != null:
+	if quickscope_mode and weapon_bar != null:
 		weapon_bar.visible = false
+	if parkour_mode and weapon_bar != null:
+		weapon_bar.visible = true
+		for id in weapon_buttons:
+			weapon_buttons[id].visible = id == "knife"
 	if quickscope_mode and time_value != null:
 		time_value.visible = true
 	crosshair.player = player
