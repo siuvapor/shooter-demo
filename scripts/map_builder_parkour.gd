@@ -9,7 +9,7 @@ func _ready() -> void:
 	_add_environment()
 	_add_start_platform()
 	_add_floating_route()
-	_add_moving_platform()
+	_add_portal_bridge()
 	_add_rotating_ring()
 	_add_finish_spire()
 	_add_ambient_rocks()
@@ -63,24 +63,51 @@ func _add_floating_route() -> void:
 		_add_glow_marker(entry["pos"] + Vector3(0.0, 0.32, 0.0), color.lightened(0.35), 0.42)
 
 
-func _add_moving_platform() -> void:
-	var holder := Node3D.new()
-	holder.name = "MovingPlatform"
-	holder.position = Vector3(0.0, 9.8, 0.0)
-	add_child(holder)
-	_add_box_body(holder, Vector3.ZERO, Vector3(2.8, 0.5, 2.8), Color(0.95, 0.62, 0.28), true)
-	var rail_color := Color(0.95, 0.82, 0.52)
-	_add_box_body(holder, Vector3(-1.15, 0.28, 0.0), Vector3(0.14, 0.5, 2.6), rail_color, true)
-	_add_box_body(holder, Vector3(1.15, 0.28, 0.0), Vector3(0.14, 0.5, 2.6), rail_color, true)
-	_add_box_body(holder, Vector3(0.0, 0.28, -1.15), Vector3(2.6, 0.5, 0.14), rail_color, true)
-	_add_box_body(holder, Vector3(0.0, 0.28, 1.15), Vector3(2.6, 0.5, 0.14), rail_color, true)
-	_add_glow_marker(Vector3.ZERO, Color(0.95, 0.72, 0.35), 0.5, holder)
-	var tween := create_tween()
-	tween.set_loops()
-	tween.tween_property(holder, "position", Vector3(4.0, 9.8, 0.0), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_interval(0.45)
-	tween.tween_property(holder, "position", Vector3(0.0, 9.8, 0.0), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_interval(0.45)
+func _add_portal_bridge() -> void:
+	var start_pad := Vector3(0.0, 9.55, 0.0)
+	var end_pad := Vector3(4.0, 9.55, 0.0)
+	_add_box_body(self, start_pad, Vector3(2.6, 0.5, 2.6), Color(0.35, 0.55, 0.85), false)
+	_add_box_body(self, end_pad, Vector3(2.6, 0.5, 2.6), Color(0.45, 0.72, 0.95), false)
+	_add_glow_marker(start_pad + Vector3(0.0, 0.45, 0.0), Color(0.35, 0.9, 1.0), 0.55)
+	_add_glow_marker(end_pad + Vector3(0.0, 0.45, 0.0), Color(0.45, 0.95, 1.0), 0.55)
+
+	var portal_a := ParkourPortal.new()
+	portal_a.name = "PortalA"
+	add_child(portal_a)
+	portal_a.global_position = start_pad + Vector3(0.0, 0.55, 0.0)
+	portal_a.setup(Color(0.35, 0.9, 1.0))
+	portal_a.set_landing(end_pad + Vector3(0.0, 0.55, 0.0))
+
+	var portal_b := ParkourPortal.new()
+	portal_b.name = "PortalB"
+	add_child(portal_b)
+	portal_b.global_position = end_pad + Vector3(0.0, 0.55, 0.0)
+	portal_b.setup(Color(0.55, 0.95, 1.0))
+	portal_b.set_landing(start_pad + Vector3(0.0, 0.55, 0.0))
+	portal_a.link_to(portal_b)
+	portal_b.monitoring = false
+
+	_add_beam_between(start_pad + Vector3(0.0, 0.6, 0.0), end_pad + Vector3(0.0, 0.6, 0.0), Color(0.35, 0.9, 1.0, 0.7))
+	_add_beam_between(start_pad + Vector3(0.0, 0.9, 0.0), end_pad + Vector3(0.0, 0.9, 0.0), Color(0.8, 0.5, 1.0, 0.45))
+
+
+func _add_beam_between(from: Vector3, to: Vector3, color: Color) -> void:
+	var beam_mesh := MeshInstance3D.new()
+	beam_mesh.mesh = CylinderMesh.new()
+	var cylinder := beam_mesh.mesh as CylinderMesh
+	cylinder.top_radius = 0.09
+	cylinder.bottom_radius = 0.09
+	cylinder.height = from.distance_to(to)
+	var mat := StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = Color(color.r, color.g, color.b)
+	mat.emission_energy_multiplier = 1.4
+	beam_mesh.material_override = mat
+	beam_mesh.position = (from + to) * 0.5
+	beam_mesh.rotation.z = PI * 0.5
+	add_child(beam_mesh)
 
 
 func _add_rotating_ring() -> void:
