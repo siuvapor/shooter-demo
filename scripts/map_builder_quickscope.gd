@@ -113,14 +113,11 @@ func _add_meme_posters() -> bool:
 	return placed
 
 
-func _add_meme_poster(texture: Texture2D, pos: Vector3, rot_y: float, cover_size: Vector2, fit: bool) -> void:
+func _add_meme_poster(texture: Texture2D, pos: Vector3, rot_y: float, cover_size: Vector2, _fit: bool) -> void:
 	var sprite := Sprite3D.new()
 	sprite.texture = texture
 	var texture_size := texture.get_size()
-	if fit:
-		sprite.pixel_size = minf(cover_size.x / texture_size.x, cover_size.y / texture_size.y)
-	else:
-		sprite.pixel_size = maxf(cover_size.x / texture_size.x, cover_size.y / texture_size.y)
+	sprite.pixel_size = minf(cover_size.x / texture_size.x, cover_size.y / texture_size.y)
 	sprite.position = pos
 	sprite.rotation.y = rot_y
 	add_child(sprite)
