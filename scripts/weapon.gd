@@ -161,6 +161,7 @@ const RELOAD_END_SOUND := preload("res://assets/audio/reload_end.wav")
 const HIT_SOUND := preload("res://assets/audio/hitmarker.wav")
 const HEADSHOT_SOUND := preload("res://assets/audio/headshot.wav")
 const SLASH_SOUND := preload("res://assets/audio/slash.wav")
+const KNIFE_SLASH_SOUND := preload("res://assets/audio/knife_slash.wav")
 const BOLT_PULL_SOUND := preload("res://assets/audio/bolt_pull.wav")
 const BOLT_CLOSE_SOUND := preload("res://assets/audio/bolt_close.wav")
 
@@ -340,7 +341,7 @@ func _melee_attack(heavy := false) -> void:
 	slash_duration = slash_timer
 	slash_mode = "stab" if heavy else ("slash_b" if randi() % 2 == 0 else "slash_a")
 	fire_cooldown = 1.0 / def["fire_rate"]
-	_play_sound(SLASH_SOUND, -4.0, randf_range(0.95, 1.05))
+	_play_sound(KNIFE_SLASH_SOUND, -4.0, randf_range(0.95, 1.05))
 	var from := camera.global_position
 	var forward := -camera.global_transform.basis.z
 	var reach: float = def.get("range", 2.4)
@@ -348,12 +349,8 @@ func _melee_attack(heavy := false) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to, 0b1111)
 	query.exclude = [player.get_rid()]
 	var result := camera.get_world_3d().direct_space_state.intersect_ray(query)
-	var end: Vector3 = to
 	if result:
-		end = result.position
 		_resolve_hit(result, 2.0 if heavy else 1.0)
-	var world := get_tree().current_scene
-	Fx.spawn_tracer(world, from + forward * 0.3, end, Color(0.95, 0.88, 0.72))
 	fired.emit()
 
 
@@ -368,7 +365,8 @@ func _resolve_hit(result: Dictionary, damage_multiplier := 1.0) -> void:
 		collider.take_damage(body_damage, "body", result.position, result.normal, player)
 		return
 	if collider == null or not collider.is_in_group("damageable"):
-		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal)
+		if current_def["type"] != "melee":
+			Fx.spawn_impact(get_tree().current_scene, result.position, result.normal)
 		return
 	if collider.has_method("take_damage") and collider.get("shield_active") == true:
 		Fx.spawn_impact(get_tree().current_scene, result.position, result.normal, Color(0.4, 0.8, 1.0))
