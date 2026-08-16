@@ -108,11 +108,6 @@ func _ready() -> void:
 	player.weapon.kill_confirmed.connect(_on_kill_confirmed)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		get_tree().quit()
-
-
 func _physics_process(delta: float) -> void:
 	for i in range(_pending_tombstones.size() - 1, -1, -1):
 		var entry: Dictionary = _pending_tombstones[i]

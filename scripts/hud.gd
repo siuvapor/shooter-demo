@@ -29,10 +29,14 @@ var current_player_score := 0
 var current_bot_score := 0
 var hit_feedback: Control
 var weapon_bar: Control
+var pause_panel: PanelContainer
+var pause_sensitivity_slider: HSlider
+var pause_sensitivity_value: Label
 
 
 func _ready() -> void:
 	layer = 10
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 
 
@@ -231,6 +235,56 @@ func _build_ui() -> void:
 		_loadout_buttons[weapon_id] = button
 		loadout_vbox.add_child(button)
 
+	pause_panel = PanelContainer.new()
+	pause_panel.visible = false
+	pause_panel.set_anchors_preset(Control.PRESET_CENTER)
+	pause_panel.position = Vector2(-210.0, -195.0)
+	pause_panel.custom_minimum_size = Vector2(420.0, 390.0)
+	pause_panel.add_theme_stylebox_override("panel", _hud_panel_style())
+	root.add_child(pause_panel)
+	var pause_vbox := VBoxContainer.new()
+	pause_vbox.add_theme_constant_override("separation", 10)
+	pause_panel.add_child(pause_vbox)
+	var pause_title := _make_label(32, Color(1.0, 0.95, 0.85))
+	pause_title.text = "暂停"
+	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_vbox.add_child(pause_title)
+	var sensitivity_row := HBoxContainer.new()
+	var sensitivity_label := Label.new()
+	sensitivity_label.text = "灵敏度"
+	sensitivity_label.custom_minimum_size = Vector2(90.0, 0.0)
+	pause_sensitivity_slider = HSlider.new()
+	pause_sensitivity_slider.min_value = 0.5
+	pause_sensitivity_slider.max_value = 3.0
+	pause_sensitivity_slider.step = 0.05
+	pause_sensitivity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pause_sensitivity_slider.value_changed.connect(_on_pause_sensitivity_changed)
+	pause_sensitivity_value = Label.new()
+	pause_sensitivity_value.custom_minimum_size = Vector2(72.0, 0.0)
+	pause_sensitivity_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sensitivity_row.add_child(sensitivity_label)
+	sensitivity_row.add_child(pause_sensitivity_slider)
+	sensitivity_row.add_child(pause_sensitivity_value)
+	pause_vbox.add_child(sensitivity_row)
+	var continue_button := Button.new()
+	continue_button.text = "继续游戏"
+	continue_button.custom_minimum_size = Vector2(0.0, 46.0)
+	continue_button.focus_mode = Control.FOCUS_NONE
+	continue_button.pressed.connect(_on_continue_pressed)
+	pause_vbox.add_child(continue_button)
+	var menu_button := Button.new()
+	menu_button.text = "返回主界面"
+	menu_button.custom_minimum_size = Vector2(0.0, 46.0)
+	menu_button.focus_mode = Control.FOCUS_NONE
+	menu_button.pressed.connect(_on_pause_menu_pressed)
+	pause_vbox.add_child(menu_button)
+	var pause_quit_button := Button.new()
+	pause_quit_button.text = "退出至桌面"
+	pause_quit_button.custom_minimum_size = Vector2(0.0, 46.0)
+	pause_quit_button.focus_mode = Control.FOCUS_NONE
+	pause_quit_button.pressed.connect(_on_pause_quit_pressed)
+	pause_vbox.add_child(pause_quit_button)
+
 
 func _make_label(size: int, color: Color) -> Label:
 	var label := Label.new()
@@ -313,11 +367,64 @@ func _on_quit_to_desktop_pressed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		toggle_pause()
+		return
 	if quickscope_mode or parkour_mode:
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
 		loadout_panel.visible = not loadout_panel.visible
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if loadout_panel.visible else Input.MOUSE_MODE_CAPTURED
+
+
+func toggle_pause() -> void:
+	if stats_panel.visible:
+		return
+	_set_paused(not get_tree().paused)
+
+
+func _set_paused(paused: bool) -> void:
+	get_tree().paused = paused
+	if pause_panel != null:
+		pause_panel.visible = paused
+	if paused:
+		_sync_pause_sensitivity()
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _sync_pause_sensitivity() -> void:
+	var settings := get_node_or_null("/root/Settings")
+	if settings == null:
+		return
+	var multiplier: float = settings.mouse_sensitivity / settings.DEFAULT_SENSITIVITY
+	if pause_sensitivity_slider != null:
+		pause_sensitivity_slider.set_value_no_signal(multiplier)
+	if pause_sensitivity_value != null:
+		pause_sensitivity_value.text = "%.2fx" % multiplier
+
+
+func _on_pause_sensitivity_changed(value: float) -> void:
+	var settings := get_node_or_null("/root/Settings")
+	if settings != null:
+		settings.set_sensitivity(settings.DEFAULT_SENSITIVITY * value)
+	if pause_sensitivity_value != null:
+		pause_sensitivity_value.text = "%.2fx" % value
+
+
+func _on_continue_pressed() -> void:
+	_set_paused(false)
+
+
+func _on_pause_menu_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _on_pause_quit_pressed() -> void:
+	get_tree().paused = false
+	get_tree().quit()
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
