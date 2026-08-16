@@ -52,6 +52,7 @@ var _quickscope_timer := 0.0
 var _quickscope_target := Vector3.ZERO
 var _quickscope_side := 1.0
 var _jump_peek_side := 1.0
+var _peek_variant := 1
 var _peek_hidden_z := -4.6
 var _peek_out_z := -3.0
 var _peek_target_z := -4.6
@@ -221,9 +222,14 @@ func _choose_quickscope_action() -> void:
 		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
+		_peek_variant = 1 if randi() % 2 == 0 else 2
 		var side := -1.0 if global_position.z < 0.0 else 1.0
-		_peek_hidden_z = side * 4.6
-		_peek_out_z = side * 3.0
+		if _peek_variant == 1:
+			_peek_hidden_z = side * 4.6
+			_peek_out_z = side * 3.0
+		else:
+			_peek_hidden_z = side * 5.6
+			_peek_out_z = side * 2.0
 		_peek_target_z = _peek_hidden_z
 		_peek_wait = 0.2
 	elif _quickscope_action == 3:
