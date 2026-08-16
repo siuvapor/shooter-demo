@@ -109,7 +109,7 @@ func _build_body() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if weapon != null and weapon.current_weapon_id == "lockon":
+	if weapon != null and weapon.is_lock_aim_active():
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		base_yaw -= event.relative.x * mouse_sensitivity

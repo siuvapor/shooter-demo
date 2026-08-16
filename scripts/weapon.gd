@@ -191,6 +191,8 @@ var bolt_timer := 0.0
 var bolt_duration := 1.0
 var _bolt_pull_played := false
 var _bolt_close_played := false
+var _lock_aim_enabled := false
+var _l_was_down := false
 var sniper_scope_on := false
 var _rmb_was_down := false
 var _lock_target: Node3D
@@ -279,6 +281,10 @@ func _process(delta: float) -> void:
 		select_weapon_id("lockon")
 	if Input.is_physical_key_pressed(KEY_F):
 		start_inspect()
+	var l_down := Input.is_physical_key_pressed(KEY_L)
+	if l_down and not _l_was_down:
+		toggle_lock_aim()
+	_l_was_down = l_down
 	_update_lockon()
 	if Input.is_physical_key_pressed(KEY_R):
 		start_reload()
@@ -312,7 +318,7 @@ func fire() -> void:
 
 	var from := camera.global_position
 	var direction := _shoot_direction(calculate_spread())
-	if current_def["type"] == "special" and _lock_target != null:
+	if _lock_target != null:
 		var head: Vector3 = _lock_target.global_position + Vector3(0.0, 1.55, 0.0)
 		direction = (head - from).normalized()
 	var to := from + direction * RANGE
@@ -467,7 +473,7 @@ func _update_spray(delta: float) -> void:
 
 
 func _update_lockon() -> void:
-	if current_def["type"] != "special" or player == null or player.dead:
+	if not is_lock_aim_active() or player == null or player.dead:
 		_lock_target = null
 		return
 	var best: Node3D = null
@@ -498,7 +504,19 @@ func _update_lockon() -> void:
 
 
 func is_locked() -> bool:
-	return _lock_target != null and current_def["type"] == "special"
+	return _lock_target != null and is_lock_aim_active()
+
+
+func is_lock_aim_active() -> bool:
+	return current_def["type"] == "special" or (_is_quickscope_mode() and current_weapon_id == "operator" and _lock_aim_enabled)
+
+
+func toggle_lock_aim() -> void:
+	if not (_is_quickscope_mode() and current_weapon_id == "operator"):
+		return
+	_lock_aim_enabled = not _lock_aim_enabled
+	if not _lock_aim_enabled:
+		_lock_target = null
 
 
 func _update_ads(delta: float) -> void:
@@ -726,6 +744,8 @@ func _reset_weapon_state() -> void:
 	bolt_duration = 1.0
 	_bolt_pull_played = false
 	_bolt_close_played = false
+	_lock_aim_enabled = false
+	_l_was_down = false
 	sniper_scope_on = false
 	_rmb_was_down = false
 	_lock_target = null
