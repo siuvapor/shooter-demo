@@ -238,7 +238,7 @@ func _old_lady_walk(delta: float) -> void:
 		_quickscope_side *= -1.0
 		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 		to_target = _quickscope_target - global_position
-	velocity = to_target.normalized() * WALK_SPEED
+	velocity = to_target.normalized() * (WALK_SPEED * 2.0)
 
 
 func _jump_peek(delta: float) -> void:
@@ -261,14 +261,14 @@ func _jump_peek(delta: float) -> void:
 			_peek_wait = 0.15
 			_peek_target_z = _peek_hidden_right_z if _peek_target_z == _peek_hidden_left_z else _peek_hidden_left_z
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 3.0, -9.0, 9.0)
+		velocity.z = clampf((_peek_target_z - global_position.z) * 6.0, -18.0, 18.0)
 		if absf(global_position.z) <= 3.2:
 			velocity.y = 7.6
 		else:
 			velocity.y = 0.0
 	else:
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 3.0, -9.0, 9.0)
+		velocity.z = clampf((_peek_target_z - global_position.z) * 6.0, -18.0, 18.0)
 
 
 func _quick_pass(delta: float) -> void:
@@ -281,7 +281,7 @@ func _quick_pass(delta: float) -> void:
 	if to_target.length() < 1.0:
 		_choose_quickscope_action()
 		return
-	velocity = to_target.normalized() * (WALK_SPEED * speed_multiplier * 0.725)
+	velocity = to_target.normalized() * (WALK_SPEED * speed_multiplier * 1.45)
 
 
 func _face_player(delta: float) -> void:
