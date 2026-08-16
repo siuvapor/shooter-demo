@@ -24,6 +24,7 @@ var weapon_buttons: Dictionary = {}
 var _loadout_buttons: Dictionary = {}
 var zombie_mode := false
 var quickscope_mode := false
+var parkour_mode := false
 var current_player_score := 0
 var current_bot_score := 0
 var hit_feedback: Control
@@ -55,7 +56,8 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 	bot = target_bot
 	var settings := get_node_or_null("/root/Settings")
 	quickscope_mode = settings != null and settings.game_mode == "quickscope"
-	if quickscope_mode and weapon_bar != null:
+	parkour_mode = settings != null and settings.game_mode == "parkour"
+	if (quickscope_mode or parkour_mode) and weapon_bar != null:
 		weapon_bar.visible = false
 	if quickscope_mode and time_value != null:
 		time_value.visible = true
@@ -242,6 +244,8 @@ func update_score(player_score: int, bot_score: int) -> void:
 	if score_value != null:
 		if zombie_mode:
 			score_value.text = "KILLS %d" % player_score
+		elif parkour_mode:
+			score_value.text = "PARKOUR"
 		else:
 			score_value.text = "YOU %d   -   %d BOT" % [player_score, bot_score]
 
@@ -295,7 +299,7 @@ func _on_quit_to_desktop_pressed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if quickscope_mode:
+	if quickscope_mode or parkour_mode:
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
 		loadout_panel.visible = not loadout_panel.visible

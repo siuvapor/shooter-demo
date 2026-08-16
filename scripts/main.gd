@@ -39,6 +39,7 @@ var respawn_queued := ""
 var respawn_timer := 0.0
 var zombie_mode := false
 var quickscope_mode := false
+var parkour_mode := false
 var quickscope_time_left := QUICKSCOPE_DURATION
 var zombie_spawn_timer := 0.0
 var zombie_spawn_interval := 5.0
@@ -60,12 +61,23 @@ func _ready() -> void:
 	var settings := get_node_or_null("/root/Settings")
 	zombie_mode = settings != null and settings.game_mode == "zombie"
 	quickscope_mode = settings != null and settings.game_mode == "quickscope"
+	parkour_mode = settings != null and settings.game_mode == "parkour"
 	var map_id := "tower"
 	if settings != null:
 		map_id = settings.selected_map
 	if quickscope_mode:
 		map_id = "quickscope"
-	map_builder = MapBuilderQuickscope.new() if map_id == "quickscope" else MapBuilderField.new() if map_id == "field" else MapBuilderTower.new()
+	elif parkour_mode:
+		map_id = "parkour"
+	match map_id:
+		"quickscope":
+			map_builder = MapBuilderQuickscope.new()
+		"parkour":
+			map_builder = MapBuilderParkour.new()
+		"field":
+			map_builder = MapBuilderField.new()
+		_:
+			map_builder = MapBuilderTower.new()
 	add_child(map_builder)
 	if map_id == "tower":
 		_spawn_ropes()
@@ -78,7 +90,7 @@ func _ready() -> void:
 		if _zombie_difficulty() == "insane":
 			for i in range(10):
 				_spawn_zombie()
-	else:
+	elif not parkour_mode:
 		_spawn_bots(1 if quickscope_mode else _bot_count())
 	hud = HUD.new()
 	add_child(hud)
@@ -110,6 +122,8 @@ func _physics_process(delta: float) -> void:
 			match_over = true
 			hud.show_message("TIME UP", true)
 			_show_end_stats()
+	if parkour_mode and player != null and player.global_position.y < -18.0:
+		player.respawn_at(Vector3(-34.0, 0.0, 0.0), -PI * 0.5)
 	if match_over or respawn_queued == "":
 		if zombie_mode:
 			zombie_spawn_timer -= delta
@@ -132,7 +146,12 @@ func _spawn_player() -> void:
 	player = Player.new()
 	player.name = "Player"
 	add_child(player)
-	player.global_position = Vector3(-28.0, 0.0, 0.0) if quickscope_mode else Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0)
+	if quickscope_mode:
+		player.global_position = Vector3(-28.0, 0.0, 0.0)
+	elif parkour_mode:
+		player.global_position = Vector3(-34.0, 0.0, 0.0)
+	else:
+		player.global_position = Vector3(-MAP_SIZE_X * 0.5 + 4.0, 0.0, 0.0)
 	player.rotation.y = -PI * 0.5
 	player.add_to_group("damageable")
 	player.died.connect(_on_player_died)

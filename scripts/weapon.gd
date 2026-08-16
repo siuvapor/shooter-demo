@@ -219,6 +219,8 @@ func setup(owner_player: Player, cam: Camera3D) -> void:
 	var settings := get_node_or_null("/root/Settings")
 	if settings != null and settings.game_mode == "quickscope":
 		select_weapon_id("operator", true)
+	elif settings != null and settings.game_mode == "parkour":
+		select_weapon_id("knife", true)
 	else:
 		select_weapon_id("vandal", true)
 
@@ -602,8 +604,11 @@ func select_weapon_id(id: String, force := false) -> void:
 	if not WEAPON_DEFS.has(id):
 		return
 	var settings := get_node_or_null("/root/Settings")
-	if settings != null and settings.game_mode == "quickscope" and id != "operator":
-		return
+	if settings != null:
+		if settings.game_mode == "quickscope" and id != "operator":
+			return
+		if settings.game_mode == "parkour" and id != "knife":
+			return
 	if id == current_weapon_id and not force:
 		return
 	if _built and current_def.has("name"):

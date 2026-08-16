@@ -228,6 +228,11 @@ func _build_ui() -> void:
 	quickscope_button.tooltip_text = "只能使用狙击枪。专用双高墙地图，中间留门；敌人没有武器不会攻击，会在门后反复做老奶奶走路、跳 peek、快速通过，移速 x3。"
 	quickscope_button.pressed.connect(_on_quickscope_pressed)
 	left_modes.add_child(quickscope_button)
+	var parkour_button := _make_button("跑酷模式", Color(0.72, 0.42, 0.88), Color(0.86, 0.54, 1.0))
+	parkour_button.custom_minimum_size = Vector2(220.0, 52.0)
+	parkour_button.tooltip_text = "只能使用蝴蝶刀，没有敌人。专用天空遗迹地图，包含浮空平台、移动平台、旋转巨环和狭窄横梁，坠落会回到起点。"
+	parkour_button.pressed.connect(_on_parkour_pressed)
+	left_modes.add_child(parkour_button)
 
 
 func _sync_controls() -> void:
@@ -281,6 +286,13 @@ func _on_quickscope_pressed() -> void:
 	var settings := _settings_node()
 	if settings != null:
 		settings.game_mode = "quickscope"
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _on_parkour_pressed() -> void:
+	var settings := _settings_node()
+	if settings != null:
+		settings.game_mode = "parkour"
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 

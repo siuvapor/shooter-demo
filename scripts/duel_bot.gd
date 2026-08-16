@@ -214,10 +214,10 @@ func _choose_quickscope_action() -> void:
 
 
 func _old_lady_walk(delta: float) -> void:
-	rotation.y += delta * 3.2 * _quickscope_side
+	rotation.y += delta * 5.5 * _quickscope_side
 	var t := Time.get_ticks_msec() / 1000.0
-	body_root.rotation.x = 0.30 + sin(t * 5.0) * 0.08
-	body_root.rotation.z = sin(t * 4.0) * 0.14
+	body_root.rotation.x = 0.34 + sin(t * 5.0) * 0.14
+	body_root.rotation.z = sin(t * 4.0) * 0.30
 	var to_target := _quickscope_target - global_position
 	to_target.y = 0.0
 	if to_target.length() < 0.6:
