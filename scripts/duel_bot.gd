@@ -52,9 +52,9 @@ var _quickscope_timer := 0.0
 var _quickscope_target := Vector3.ZERO
 var _quickscope_side := 1.0
 var _jump_peek_side := 1.0
-var _peek_home_x := 2.6
-var _peek_front_x := 1.0
-var _peek_target_x := 2.6
+var _peek_hidden_left_z := -4.4
+var _peek_hidden_right_z := 4.4
+var _peek_target_z := -4.4
 var _peek_wait := 0.15
 var _rifle_mesh: MeshInstance3D
 
@@ -221,9 +221,9 @@ func _choose_quickscope_action() -> void:
 		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
-		_peek_home_x = 2.6
-		_peek_front_x = 1.0
-		_peek_target_x = _peek_home_x
+		_peek_hidden_left_z = -4.4
+		_peek_hidden_right_z = 4.4
+		_peek_target_z = _peek_hidden_left_z if randi() % 2 == 0 else _peek_hidden_right_z
 		_peek_wait = 0.15
 
 
@@ -246,24 +246,29 @@ func _jump_peek(delta: float) -> void:
 	body_root.rotation.z = lerpf(body_root.rotation.z, 0.0, 0.1)
 	_face_player(delta)
 	_peek_wait = maxf(0.0, _peek_wait - delta)
+	if is_on_floor() and absf(global_position.x - 2.2) > 0.5:
+		velocity.x = clampf((2.2 - global_position.x) * 3.0, -6.0, 6.0)
+		velocity.z = 0.0
+		velocity.y = 0.0
+		return
 	if is_on_floor():
 		if _peek_wait > 0.0:
 			velocity.x = 0.0
 			velocity.z = 0.0
 			velocity.y = 0.0
 			return
-		if absf(global_position.x - _peek_target_x) < 0.22:
-			if _peek_target_x == _peek_home_x:
-				_peek_wait = 0.15
-				_peek_target_x = _peek_front_x
-			else:
-				velocity.y = 7.6
-				_peek_target_x = _peek_home_x
-		velocity.x = clampf((_peek_target_x - global_position.x) * 5.0, -9.0, 9.0)
-		velocity.z = 0.0
+		if absf(global_position.z - _peek_target_z) < 0.3:
+			_peek_wait = 0.15
+			_peek_target_z = _peek_hidden_right_z if _peek_target_z == _peek_hidden_left_z else _peek_hidden_left_z
+		velocity.x = 0.0
+		velocity.z = clampf((_peek_target_z - global_position.z) * 3.0, -9.0, 9.0)
+		if absf(global_position.z) <= 3.2:
+			velocity.y = 7.6
+		else:
+			velocity.y = 0.0
 	else:
-		velocity.x = clampf((_peek_target_x - global_position.x) * 5.0, -9.0, 9.0)
-		velocity.z = 0.0
+		velocity.x = 0.0
+		velocity.z = clampf((_peek_target_z - global_position.z) * 3.0, -9.0, 9.0)
 
 
 func _quick_pass(delta: float) -> void:
