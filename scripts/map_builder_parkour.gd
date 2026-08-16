@@ -68,12 +68,19 @@ func _add_moving_platform() -> void:
 	holder.name = "MovingPlatform"
 	holder.position = Vector3(0.0, 9.8, 0.0)
 	add_child(holder)
-	_add_box_body(holder, Vector3.ZERO, Vector3(1.7, 0.35, 1.7), Color(0.95, 0.62, 0.28), true)
+	_add_box_body(holder, Vector3.ZERO, Vector3(2.8, 0.5, 2.8), Color(0.95, 0.62, 0.28), true)
+	var rail_color := Color(0.95, 0.82, 0.52)
+	_add_box_body(holder, Vector3(-1.15, 0.28, 0.0), Vector3(0.14, 0.5, 2.6), rail_color, true)
+	_add_box_body(holder, Vector3(1.15, 0.28, 0.0), Vector3(0.14, 0.5, 2.6), rail_color, true)
+	_add_box_body(holder, Vector3(0.0, 0.28, -1.15), Vector3(2.6, 0.5, 0.14), rail_color, true)
+	_add_box_body(holder, Vector3(0.0, 0.28, 1.15), Vector3(2.6, 0.5, 0.14), rail_color, true)
 	_add_glow_marker(Vector3.ZERO, Color(0.95, 0.72, 0.35), 0.5, holder)
 	var tween := create_tween()
 	tween.set_loops()
-	tween.tween_property(holder, "position", Vector3(4.0, 9.8, 0.0), 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(holder, "position", Vector3(0.0, 9.8, 0.0), 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(holder, "position", Vector3(4.0, 9.8, 0.0), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_interval(0.45)
+	tween.tween_property(holder, "position", Vector3(0.0, 9.8, 0.0), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_interval(0.45)
 
 
 func _add_rotating_ring() -> void:
