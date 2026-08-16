@@ -63,7 +63,7 @@ func setup(target_player: Player, target_bot: DuelBot) -> void:
 		weapon_bar.visible = true
 		for id in weapon_buttons:
 			weapon_buttons[id].visible = id == "knife"
-	if quickscope_mode and time_value != null:
+	if (quickscope_mode or parkour_mode) and time_value != null:
 		time_value.visible = true
 	crosshair.player = player
 	player.health_changed.connect(_on_health_changed)
@@ -257,6 +257,10 @@ func update_score(player_score: int, bot_score: int) -> void:
 func update_time(seconds_left: float) -> void:
 	if time_value == null:
 		return
+	if parkour_mode:
+		time_value.text = "TIME %.1f" % seconds_left
+		time_value.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
+		return
 	var seconds := maxi(0, int(ceil(seconds_left)))
 	time_value.text = "TIME %02d" % seconds
 	time_value.add_theme_color_override("font_color", Color(0.95, 0.3, 0.2) if seconds <= 10 else Color(0.95, 0.75, 0.45))
@@ -274,6 +278,12 @@ func show_message(text: String, _final: bool) -> void:
 
 func show_end_stats(stats: Dictionary, is_zombie: bool) -> void:
 	stats_panel.visible = true
+	if parkour_mode:
+		stats_body.text = "完成时间: %.1f 秒\n坠落次数: %d" % [
+			float(stats["score"]),
+			int(stats["deaths"])
+		]
+		return
 	var score_text := "%.1f" % float(stats["score"]) if is_zombie else str(int(stats["score"]))
 	var hits: int = stats["hits"]
 	var shots: int = stats["shots"]

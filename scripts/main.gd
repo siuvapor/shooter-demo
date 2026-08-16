@@ -41,6 +41,7 @@ var zombie_mode := false
 var quickscope_mode := false
 var parkour_mode := false
 var quickscope_time_left := QUICKSCOPE_DURATION
+var parkour_time := 0.0
 var zombie_spawn_timer := 0.0
 var zombie_spawn_interval := 5.0
 var _tombstones: Array[Tombstone] = []
@@ -79,6 +80,8 @@ func _ready() -> void:
 		_:
 			map_builder = MapBuilderTower.new()
 	add_child(map_builder)
+	if parkour_mode:
+		(map_builder as MapBuilderParkour).finished.connect(_on_parkour_finished)
 	if map_id == "tower":
 		_spawn_ropes()
 		_spawn_jump_pads()
@@ -98,6 +101,8 @@ func _ready() -> void:
 	hud.set_zombie_mode(zombie_mode)
 	if quickscope_mode:
 		hud.update_time(quickscope_time_left)
+	elif parkour_mode:
+		hud.update_time(parkour_time)
 	player.weapon.fired.connect(_on_shot_fired)
 	player.weapon.damage_dealt.connect(_on_damage_dealt)
 	player.weapon.kill_confirmed.connect(_on_kill_confirmed)
@@ -122,7 +127,11 @@ func _physics_process(delta: float) -> void:
 			match_over = true
 			hud.show_message("TIME UP", true)
 			_show_end_stats()
+	if parkour_mode and not match_over:
+		parkour_time += delta
+		hud.update_time(parkour_time)
 	if parkour_mode and player != null and player.global_position.y < -18.0:
+		stats["deaths"] += 1
 		player.respawn_at(Vector3(-34.0, 0.0, 0.0), -PI * 0.5)
 	if match_over or respawn_queued == "":
 		if zombie_mode:
@@ -299,10 +308,20 @@ func _zombie_difficulty() -> String:
 
 
 func _show_end_stats() -> void:
-	if not zombie_mode:
+	if parkour_mode:
+		stats["score"] = parkour_time
+	elif not zombie_mode:
 		stats["score"] = float(player_score)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	hud.show_end_stats(stats, zombie_mode)
+
+
+func _on_parkour_finished() -> void:
+	if match_over:
+		return
+	match_over = true
+	hud.show_message("PARKOUR COMPLETE", true)
+	_show_end_stats()
 
 
 func _spawn_zombie() -> void:

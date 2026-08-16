@@ -2,7 +2,11 @@ class_name MapBuilderParkour
 extends Node3D
 
 
+signal finished
+
 const START_POS := Vector3(-34.0, 0.0, 0.0)
+
+var _finish_triggered := false
 
 
 func _ready() -> void:
@@ -137,6 +141,26 @@ func _add_finish_spire() -> void:
 	beacon.light_energy = 3.0
 	beacon.omni_range = 8.0
 	add_child(beacon)
+
+	var finish_area := Area3D.new()
+	finish_area.name = "FinishZone"
+	finish_area.collision_mask = 0b10
+	finish_area.monitoring = true
+	finish_area.body_entered.connect(_on_finish_entered)
+	add_child(finish_area)
+	finish_area.global_position = Vector3(12.0, 11.5, 0.0)
+	var finish_shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(5.0, 3.0, 5.0)
+	finish_shape.shape = box
+	finish_area.add_child(finish_shape)
+
+
+func _on_finish_entered(body: Node3D) -> void:
+	if _finish_triggered or not (body is Player):
+		return
+	_finish_triggered = true
+	finished.emit()
 
 
 func _add_ambient_rocks() -> void:
