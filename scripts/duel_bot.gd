@@ -206,7 +206,13 @@ func _update_quickscope_action(delta: float) -> void:
 
 
 func _choose_quickscope_action() -> void:
-	_quickscope_action = randi_range(1, 3)
+	var roll := randi_range(1, 100)
+	if roll <= 22:
+		_quickscope_action = 1
+	elif roll <= 64:
+		_quickscope_action = 2
+	else:
+		_quickscope_action = 3
 	_quickscope_timer = randf_range(1.5, 2.2)
 	_quickscope_side = 1.0 if randi() % 2 == 0 else -1.0
 	if _quickscope_action == 1:
@@ -241,10 +247,10 @@ func _jump_peek(delta: float) -> void:
 			_peek_target_z = _peek_center_z + _jump_peek_side * 1.1
 		velocity.y = 7.6
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 1.8, -2.8, 2.8)
+		velocity.z = clampf((_peek_target_z - global_position.z) * 3.6, -5.6, 5.6)
 	else:
 		velocity.x = 0.0
-		velocity.z = clampf((_peek_target_z - global_position.z) * 1.8, -2.8, 2.8)
+		velocity.z = clampf((_peek_target_z - global_position.z) * 3.6, -5.6, 5.6)
 
 
 func _quick_pass(delta: float) -> void:
