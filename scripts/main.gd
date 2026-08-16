@@ -222,6 +222,11 @@ func _on_bot_died(bot_instance: DuelBot) -> void:
 		return
 	player_score += 1
 	hud.update_score(player_score, bot_score)
+	if quickscope_mode:
+		_respawn_bot = bot_instance
+		respawn_queued = "bot"
+		respawn_timer = BOT_RESPAWN_DELAY
+		return
 	if player_score >= _win_score():
 		match_over = true
 		hud.show_message("VICTORY", true)

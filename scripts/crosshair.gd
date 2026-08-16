@@ -23,7 +23,7 @@ func trigger_hitmarker(zone: String) -> void:
 func _draw() -> void:
 	var center := size / 2.0
 	var gap := 7.0
-	var locked := player != null and player.weapon != null and player.weapon.is_locked()
+	var locked := player != null and player.weapon != null and player.weapon.is_locked() and player.weapon.ads_amount > 0.5
 	var color := Color(1.0, 0.2, 0.15, 0.98) if locked else Color(1.0, 1.0, 1.0, 0.95)
 	if player != null and player.weapon != null:
 		gap = (4.0 if locked else 6.0) + player.weapon.get_visual_spread() * 3.2
