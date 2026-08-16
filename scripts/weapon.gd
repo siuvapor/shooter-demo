@@ -161,6 +161,8 @@ const RELOAD_END_SOUND := preload("res://assets/audio/reload_end.wav")
 const HIT_SOUND := preload("res://assets/audio/hitmarker.wav")
 const HEADSHOT_SOUND := preload("res://assets/audio/headshot.wav")
 const SLASH_SOUND := preload("res://assets/audio/slash.wav")
+const BOLT_PULL_SOUND := preload("res://assets/audio/bolt_pull.wav")
+const BOLT_CLOSE_SOUND := preload("res://assets/audio/bolt_close.wav")
 
 var player: Player
 var camera: Camera3D
@@ -186,6 +188,8 @@ var slash_duration := 0.42
 var slash_mode := ""
 var bolt_timer := 0.0
 var bolt_duration := 1.0
+var _bolt_pull_played := false
+var _bolt_close_played := false
 var sniper_scope_on := false
 var _rmb_was_down := false
 var _lock_target: Node3D
@@ -298,6 +302,8 @@ func fire() -> void:
 		sniper_scope_on = false
 		bolt_timer = fire_cooldown
 		bolt_duration = fire_cooldown
+		_bolt_pull_played = false
+		_bolt_close_played = false
 	if not _has_infinite_magazine():
 		magazine -= 1
 	_ammo[current_weapon_id] = {"magazine": magazine, "reserve": reserve}
@@ -580,14 +586,31 @@ func _update_viewmodel(delta: float) -> void:
 
 	if bolt_timer > 0.0 and current_weapon_id == "operator":
 		var p := 1.0 - bolt_timer / maxf(bolt_duration, 0.001)
-		var stroke := sin(p * PI)
-		var handle_cycle := sin(p * TAU)
-		position.y += stroke * 0.055
-		position.z += stroke * 0.11
+		var pull := 0.0
+		var lift := 0.0
+		if p < 0.28:
+			var t := p / 0.28
+			pull = t * t * (3.0 - 2.0 * t)
+			lift = pull
+		elif p < 0.56:
+			pull = 1.0
+			lift = 1.0
+		elif p < 0.84:
+			var t := (p - 0.56) / 0.28
+			pull = 1.0 - t * t * (3.0 - 2.0 * t)
+			lift = pull
+		position.y += pull * 0.055
+		position.z += pull * 0.12
 		if _bolt_mesh != null:
-			_bolt_mesh.position.z = 0.02 + stroke * 0.18
-			_bolt_mesh.position.y = 0.035 + handle_cycle * 0.055
-			_bolt_mesh.rotation.x = handle_cycle * 0.42
+			_bolt_mesh.position.z = 0.02 + pull * 0.22
+			_bolt_mesh.position.y = 0.035 + lift * 0.07
+			_bolt_mesh.rotation.x = lift * 0.55
+		if not _bolt_pull_played and p >= 0.16:
+			_bolt_pull_played = true
+			_play_sound(BOLT_PULL_SOUND, -4.0, randf_range(0.95, 1.05))
+		if not _bolt_close_played and p >= 0.68:
+			_bolt_close_played = true
+			_play_sound(BOLT_CLOSE_SOUND, -4.0, randf_range(0.95, 1.05))
 
 	if current_def["type"] == "special":
 		var locked := _lock_target != null
@@ -703,6 +726,8 @@ func _reset_weapon_state() -> void:
 	slash_mode = ""
 	bolt_timer = 0.0
 	bolt_duration = 1.0
+	_bolt_pull_played = false
+	_bolt_close_played = false
 	sniper_scope_on = false
 	_rmb_was_down = false
 	_lock_target = null
