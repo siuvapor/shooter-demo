@@ -96,11 +96,11 @@ func _add_distraction_decals() -> void:
 
 func _add_meme_posters() -> bool:
 	var slots := [
-		{"pos": Vector3(-0.38, 3.0, -9.0), "rot": PI * 0.5},
-		{"pos": Vector3(-0.38, 4.8, -14.0), "rot": PI * 0.5},
-		{"pos": Vector3(-0.38, 3.4, 9.0), "rot": PI * 0.5},
-		{"pos": Vector3(-0.38, 5.5, 14.0), "rot": PI * 0.5},
-		{"pos": Vector3(-0.46, 6.3, 0.0), "rot": PI * 0.5},
+		{"pos": Vector3(-0.38, 4.0, -15.8), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
+		{"pos": Vector3(-0.38, 4.0, -7.4), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
+		{"pos": Vector3(-0.38, 4.0, 7.4), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
+		{"pos": Vector3(-0.38, 4.0, 15.8), "rot": PI * 0.5, "cover": Vector2(8.5, 7.6), "fit": false},
+		{"pos": Vector3(-0.46, 6.3, 0.0), "rot": PI * 0.5, "cover": Vector2(6.4, 1.1), "fit": true},
 	]
 	var placed := false
 	for i in MEME_TEXTURES.size():
@@ -108,19 +108,19 @@ func _add_meme_posters() -> bool:
 		if texture == null:
 			continue
 		var slot: Dictionary = slots[i % slots.size()]
-		_add_meme_poster(texture, slot["pos"], slot["rot"])
+		_add_meme_poster(texture, slot["pos"], slot["rot"], slot["cover"], slot["fit"])
 		placed = true
 	return placed
 
 
-func _add_meme_poster(texture: Texture2D, pos: Vector3, rot_y: float) -> void:
+func _add_meme_poster(texture: Texture2D, pos: Vector3, rot_y: float, cover_size: Vector2, fit: bool) -> void:
 	var sprite := Sprite3D.new()
 	sprite.texture = texture
 	var texture_size := texture.get_size()
-	if texture_size.y > texture_size.x * 1.15:
-		sprite.pixel_size = 2.6 / texture_size.y
+	if fit:
+		sprite.pixel_size = minf(cover_size.x / texture_size.x, cover_size.y / texture_size.y)
 	else:
-		sprite.pixel_size = 2.4 / texture_size.x
+		sprite.pixel_size = maxf(cover_size.x / texture_size.x, cover_size.y / texture_size.y)
 	sprite.position = pos
 	sprite.rotation.y = rot_y
 	add_child(sprite)
