@@ -6,6 +6,13 @@ const ARENA_X := 70.0
 const ARENA_Z := 40.0
 const WALL_HEIGHT := 8.0
 const DOOR_HALF_WIDTH := 3.2
+const MEME_TEXTURES := [
+	"res://assets/memes/172459525196e095266e6924f7.jpg",
+	"res://assets/memes/99.jpg",
+	"res://assets/memes/OIP-C (2).webp",
+	"res://assets/memes/OIP-C (3).webp",
+	"res://assets/memes/OIP-C.webp",
+]
 
 
 func _ready() -> void:
@@ -78,11 +85,45 @@ func _add_boundary_walls() -> void:
 
 
 func _add_distraction_decals() -> void:
+	if _add_meme_posters():
+		return
 	_add_poster(Vector3(-0.38, 2.9, -9.0), PI * 0.5, "这里有人?", Color(0.95, 0.25, 0.20))
 	_add_poster(Vector3(-0.38, 4.7, -14.0), PI * 0.5, "别看左边", Color(0.30, 0.82, 1.0))
 	_add_poster(Vector3(-0.38, 3.4, 9.0), PI * 0.5, "假动作", Color(1.0, 0.80, 0.22))
 	_add_poster(Vector3(-0.38, 5.5, 14.0), PI * 0.5, "下一秒爆头", Color(0.95, 0.42, 1.0))
 	_add_poster(Vector3(-0.46, 6.3, 0.0), PI * 0.5, "别相信门", Color(1.0, 0.55, 0.18))
+
+
+func _add_meme_posters() -> bool:
+	var slots := [
+		{"pos": Vector3(-0.38, 3.0, -9.0), "rot": PI * 0.5},
+		{"pos": Vector3(-0.38, 4.8, -14.0), "rot": PI * 0.5},
+		{"pos": Vector3(-0.38, 3.4, 9.0), "rot": PI * 0.5},
+		{"pos": Vector3(-0.38, 5.5, 14.0), "rot": PI * 0.5},
+		{"pos": Vector3(-0.46, 6.3, 0.0), "rot": PI * 0.5},
+	]
+	var placed := false
+	for i in MEME_TEXTURES.size():
+		var texture := load(MEME_TEXTURES[i]) as Texture2D
+		if texture == null:
+			continue
+		var slot: Dictionary = slots[i % slots.size()]
+		_add_meme_poster(texture, slot["pos"], slot["rot"])
+		placed = true
+	return placed
+
+
+func _add_meme_poster(texture: Texture2D, pos: Vector3, rot_y: float) -> void:
+	var sprite := Sprite3D.new()
+	sprite.texture = texture
+	var texture_size := texture.get_size()
+	if texture_size.y > texture_size.x * 1.15:
+		sprite.pixel_size = 2.6 / texture_size.y
+	else:
+		sprite.pixel_size = 2.4 / texture_size.x
+	sprite.position = pos
+	sprite.rotation.y = rot_y
+	add_child(sprite)
 
 
 func _add_poster(pos: Vector3, rot_y: float, text: String, accent: Color) -> void:
