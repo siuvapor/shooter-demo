@@ -409,6 +409,8 @@ func _on_pause_sensitivity_changed(value: float) -> void:
 	var settings := get_node_or_null("/root/Settings")
 	if settings != null:
 		settings.set_sensitivity(settings.DEFAULT_SENSITIVITY * value)
+		if player != null:
+			player.mouse_sensitivity = settings.mouse_sensitivity
 	if pause_sensitivity_value != null:
 		pause_sensitivity_value.text = "%.2fx" % value
 
