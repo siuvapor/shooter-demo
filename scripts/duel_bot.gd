@@ -218,7 +218,7 @@ func _choose_quickscope_action() -> void:
 	_quickscope_timer = randf_range(1.5, 2.2)
 	_quickscope_side = 1.0 if randi() % 2 == 0 else -1.0
 	if _quickscope_action == 1:
-		_quickscope_target = Vector3(randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 	elif _quickscope_action == 2:
 		_jump_peek_side = 1.0 if randi() % 2 == 0 else -1.0
 		_peek_home_x = 2.6
@@ -236,7 +236,7 @@ func _old_lady_walk(delta: float) -> void:
 	to_target.y = 0.0
 	if to_target.length() < 0.6:
 		_quickscope_side *= -1.0
-		_quickscope_target = Vector3(randf_range(4.0, 16.0), 0.0, randf_range(-6.0, 6.0))
+		_quickscope_target = Vector3(randf_range(1.2, 3.2), 0.0, randf_range(-2.4, 2.4))
 		to_target = _quickscope_target - global_position
 	velocity = to_target.normalized() * WALK_SPEED
 
@@ -270,13 +270,13 @@ func _quick_pass(delta: float) -> void:
 	body_root.rotation.x = 0.0
 	body_root.rotation.z = lerpf(body_root.rotation.z, 0.0, 0.1)
 	_face_player(delta)
-	var target := Vector3(randf_range(4.0, 16.0), 0.0, 6.0 * _quickscope_side)
+	var target := Vector3(randf_range(1.2, 3.0), 0.0, 2.2 * _quickscope_side)
 	var to_target := target - global_position
 	to_target.y = 0.0
 	if to_target.length() < 1.0:
 		_choose_quickscope_action()
 		return
-	velocity = to_target.normalized() * (WALK_SPEED * speed_multiplier * 1.45)
+	velocity = to_target.normalized() * (WALK_SPEED * speed_multiplier * 0.725)
 
 
 func _face_player(delta: float) -> void:
